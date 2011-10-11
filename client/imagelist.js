@@ -1,0 +1,1 @@
+var imageList =["images/other/rabbit.png", "images/other/start_position.png", "images/other/empty.png", "images/snake/_2.png", "images/snake/03.png", "images/snake/23.png", "images/snake/12.png", "images/snake/01.png", "images/snake/_1.png", "images/snake/_3.png", "images/snake/13.png", "images/snake/02.png", "images/snake/_0.png", "images/wall/0.png"];

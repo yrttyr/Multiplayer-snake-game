@@ -1,0 +1,41 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<style type="text/css">
+BODY {
+   margin: 0px;
+   padding: 0px;
+}
+</style>
+<title>Python</title>
+<meta charset="UTF-8">
+<script type="text/javascript" src="preload.js" version=1.8></script>
+<script type="text/javascript" src="objectTypes.js" version=1.8></script>
+<script type="text/javascript" src="imagelist.js" version=1.8></script>
+<script type="text/javascript" src="main.js" version=1.8></script>
+<script type="text/javascript" src="control.js" version=1.8></script>
+<script type="text/javascript" src="game.js" version=1.8></script>
+<script type="text/javascript" src="connect.js" version=1.8></script>
+</head>
+<body>
+<canvas id="canvas" width="110" height="110" style="display: none;"></canvas>
+
+<div id='etitorTools' style="border-style:solid; border-width:1px; overflow:auto; display: none;">
+    X<input type='text' id='Size_X' pattern='^[ 0-9]+$' onchange="game.setSizeX();" size=4>
+    Y<input type='text' id='Size_Y' pattern='^[ 0-9]+$' onchange="game.setSizeY();" size=4>
+    <br>
+        <div id='base_layer' style="overflow:auto;">Базовый слой</div>
+        <div id='ground_layer' style="overflow:auto;">Земляной слой</div>
+    <a href="" onclick="game.saveMap(); return false";>Сохранить карту</a>
+    <a href="" onclick="game.disableMapEditor(); return false";>Выйти из редактора</a>
+</div>
+
+
+<div id='games' style="border-style:solid; border-width:1px; height:120px; width:500px; overflow:auto;">
+    <a href="" onclick="createGame(); return false";>Создать игру</a>
+    <select id='mapslist' size=1>
+    </select>
+    <a href="" onclick="connect.sendData(['create_map']); return false";>Редактор карт</a>
+    <div>Список игр</div>
+</div>
+</body>
+</html>
