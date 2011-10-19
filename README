@@ -1,2 +1,2 @@
 Multiplayer browser snake game.
-I use: python with gevent, javascript.
+I use: python with gevent and ws4py for websocket, javascript with canvas.

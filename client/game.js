@@ -169,16 +169,7 @@ function Game() {
 
 
             var ground_obj = this.objects[ground.indef];
-
-            try {
-                ground_obj.draw(coord[0], coord[1], ground.type);
-            }
-            catch (e) {
-                console.error('######################################');
-                console.error('obj', this.objects);
-                console.error('indef', ground.indef);
-                throw 'ytesssssssssssssssssssssssss';
-            }
+            ground_obj.draw(coord[0], coord[1], ground.type);
 
             var base_obj = this.objects[base.indef];
             base_obj.draw(coord[0], coord[1], base.type);

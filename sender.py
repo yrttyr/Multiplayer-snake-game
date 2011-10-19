@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from weakref import WeakValueDictionary, WeakSet, ref
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from errno import EBADF
 import json
 
@@ -16,7 +16,21 @@ class Sender(WeakValueDictionary):
                 self.replace_recvfun(meth)
 
             recvmeth_names = [meth.name for meth in recv_meth]
-            self.replace_init(_cls, recvmeth_names, singleton)
+
+            #call_with_conn = [meth.__name__ for meth in send_meth
+            #                  if meth.call_with_conn]
+            dd= defaultdict(list)
+            for meth in send_meth:
+                if meth.call_priority:
+                    dd[meth.call_priority].append(meth.__name__)
+            keys = dd.keys()
+            keys.sort()
+            call_with_conn = []
+            for key in keys:
+                call_with_conn.extend(dd[key])
+
+            self.replace_init(_cls, recvmeth_names,
+                              call_with_conn, singleton)
             self.replace_del(_cls)
             return _cls
         return inner
@@ -32,10 +46,11 @@ class Sender(WeakValueDictionary):
                 recv.append(atr)
         return send, recv
 
-    def replace_init(_sender, _cls, recvmeth_names, singleton):
+    def replace_init(_sender, _cls, recvmeth_names,
+                     call_with_conn, singleton):
         _old_init = _cls.__init__
         def tmp(self, *args, **kwargs):
-            _send_obj = SendObj(self, recvmeth_names)
+            _send_obj = SendObj(self, recvmeth_names, call_with_conn)
             _sender[id(self)] = _send_obj
             if singleton:
                 _sender[_cls.__name__] = _send_obj
@@ -54,11 +69,11 @@ class Sender(WeakValueDictionary):
         _cls.__del__ = tmp
 
     def replace_sendfun(_sender, _fun):
-        def tmp(self, *args, **kwargs):
+        def tmp(self, _send_to=[], *args, **kwargs):
             data = _fun(self, *args, **kwargs)
             if not data:
                 return
-            _sender[id(self)].send((_fun.name, data))
+            _sender[id(self)].send((_fun.name, data), _send_to)
         setattr(_fun.im_class, _fun.__name__, tmp)
 
     def replace_recvfun(_sender, _fun):
@@ -66,10 +81,11 @@ class Sender(WeakValueDictionary):
             return _fun(self, *args, **kwargs)  # Нужно ловля экцептов на неправильные аргументы
         setattr(_fun.im_class, _fun.__name__, tmp)
 
-    def send_meth(self, name):
+    def send_meth(self, name, call_priority=0):
         def inner(_meth):
             _meth._sendmeth = True
             _meth.name = name
+            _meth.call_priority = call_priority
             return _meth
         return inner
 
@@ -87,10 +103,12 @@ sender = Sender()
 
 class SendObj(object):
     list_ = []
-    def __init__(self, obj, recvmeth_names):
+    def __init__(self, obj, recvmeth_names, call_with_conn):
         self._obj = ref(obj)
         self.keep_obj = None
         self.recvmeth_names = recvmeth_names
+        self.call_with_conn = call_with_conn
+        print 'call_with_conn', self.call_with_conn
         self.subscribers = WeakSet()
         self.list_.append(self)
 
@@ -103,32 +121,29 @@ class SendObj(object):
 
     def subscribe(self, sub):
         self.subscribers.add(sub)
-        self.obj.send_start()   #Отправляеться всем, непорядок
+        for meth_name in self.call_with_conn:
+            getattr(self.obj, meth_name)([sub])
 
         if self.subscribers:
-            #print('player keep')
             self.keep_obj = self.obj
 
     def unsubscribe(self, sub=None):
         if sub:
             self.subscribers.discard(sub)
 
-        #print type(self.obj).__name__, self.subscribers
         if not self.subscribers:
-            #print('player not keep')
             self.keep_obj = None
 
     def __del__(self):
         print 'del send_obj'
 
-    def send(self, data):
-        self._send(data, self.subscribers)
+    def send(self, data, sendto):
+        if not sendto:
+            sendto = self.subscribers
 
-    def _send(self, data, pl_list):
         data = self.packager(data)
-        tup = tuple(pl_list)
+        tup = tuple(sendto)
         for sub in tup:
-        #while(pl_list):
             sub.send(data)
 
     def packager(self, data):
@@ -136,7 +151,7 @@ class SendObj(object):
 
 class Subscriber(object):
     def __init__(self, connect):
-        self.connect = connect  # сделать weakref
+        self.connect = connect
         self.send_obj = WeakValueDictionary()
         self.call()
 
@@ -149,18 +164,10 @@ class Subscriber(object):
         if class_name in self.send_obj:
             self.send_obj[class_name].unsubscribe(self)
             print 'call unsub'
-            #self.unsubscribe(send_obj)
         send_obj.subscribe(self)
-        self.send_obj[class_name] = send_obj #второй словарь с id для не синглтонов
+        self.send_obj[class_name] = send_obj
         print 'sub', class_name
-
-    #def unsubscribe(self, send_obj):
-    #    print send_obj, sender
-    #    send_obj = self._get_send_obj(send_obj)
-    #    class_name = type(send_obj.obj).__name__
-    #    send_obj.unsubscribe(self)
-    #    del self.send_obj[class_name]
-    #    print 'unsub', class_name
+        print 'sub', class_name
 
     def _get_send_obj(self, data):
         if isinstance(data, basestring):

@@ -11,8 +11,6 @@ from sender import sender
 from gamemap import GameMap, GameMapContainer
 import game_objects
 
-#import sender
-#sender = sender.Sender()
 
 @sender.send_cls(singleton=True)
 class GamesList(list):
@@ -23,7 +21,6 @@ class GamesList(list):
     def add_map(self):
         map_ = MapEditor(self)
         self.append(map_)
-        #self.change.append(game)
         return map_
 
     def add_game(self, key):
@@ -32,10 +29,7 @@ class GamesList(list):
         self.change.append(game)
         return game
 
-    def send_start(self):
-        self.send_all_games()
-
-    @sender.send_meth('gamelist')
+    @sender.send_meth('gamelist', 1)
     def send_all_games(self):
         return [(id(game), game.gamemap.x, game.gamemap.y)
                 for game in self]
@@ -60,10 +54,7 @@ class MapsList(list):
         self.extend(os.listdir('maps/'))
         print self
 
-    def send_start(self):
-        self.send_all_games()
-
-    @sender.send_meth('mapslist')
+    @sender.send_meth('mapslist', 1)
     def send_all_games(self):
         return [map_name for map_name in self]
 
@@ -118,16 +109,11 @@ class Game(AbstractGame):
         self.objects.append(rabbit)
         self.greenlet = spawn(self.step)
 
-    def send_start(self):
-        self.send_gameinfo()
-        self.send_all_drawdata()
-        self.send_all_coord()
-
-    @sender.send_meth('gameinfo')
+    @sender.send_meth('gameinfo', 1)
     def send_gameinfo(self):
         return self.gamemap.x, self.gamemap.y
 
-    @sender.send_meth('allcoord')
+    @sender.send_meth('allcoord', 3)
     def send_all_coord(self):
         return [obj.get_coord() for obj in self.objects]
 
@@ -135,7 +121,7 @@ class Game(AbstractGame):
     def send_change_coord(self):
         return self.gamemap.get_changed_data()
 
-    @sender.send_meth('drawdata')
+    @sender.send_meth('drawdata', 2)
     def send_all_drawdata(self):
         return [obj.get_drawdata() for obj in self.objects]
 
@@ -169,15 +155,11 @@ class MapEditor(AbstractGame):
         self.add_object('Wall')
         self.add_object('StartPosition')
 
-    def send_start(self):
-        self.send_all_drawdata()
-        self.send_gameinfo()
-
-    @sender.send_meth('mapinfo')
+    @sender.send_meth('mapinfo', 2)
     def send_gameinfo(self):
         return self.gamemap.x, self.gamemap.y
 
-    @sender.send_meth('drawdata')
+    @sender.send_meth('drawdata', 1)
     def send_all_drawdata(self):
         return [obj.get_drawdata() for obj in self.objects]
 
