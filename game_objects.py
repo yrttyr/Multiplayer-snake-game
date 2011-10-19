@@ -6,7 +6,7 @@ from random import randint
 from gamemap import MapObject, Coord
 
 class GameObject(object):
-    def __init__(self, indef,  gamemap, coord, drawtype = 'image'):
+    def __init__(self, indef,  gamemap, coord, drawtype='image'):
         self.gamemap = gamemap
         self.pieces = list()
         self.create_object(coord)
@@ -121,6 +121,7 @@ class Snake(GameObject):
             sleep(self.speed)
 
     def dead(self):
+        print 'snake dead'
         self.greenlet.kill()
 
     def del_last(self):

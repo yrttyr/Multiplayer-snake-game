@@ -31,6 +31,8 @@ class Player(object):
     def connect_game(self, sub, game):         #нужен тест, что это именно гаме
         sub.subscribe(game)
         self.game = sub.get_sendobj('Game')
+        self.snake = None
+        self.start_coord = ()
 
     @sender.recv_meth()
     def set_start_coord(self, sub, x, y):

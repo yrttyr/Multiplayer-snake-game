@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
 from weakref import WeakValueDictionary, WeakSet, ref
 from collections import namedtuple
 from errno import EBADF
@@ -103,7 +102,6 @@ class SendObj(object):
         self.list_.remove(self)
 
     def subscribe(self, sub):
-        print 'sub'
         self.subscribers.add(sub)
         self.obj.send_start()   #Отправляеться всем, непорядок
 
@@ -119,11 +117,6 @@ class SendObj(object):
         if not self.subscribers:
             #print('player not keep')
             self.keep_obj = None
-
-        #print type(self.obj).__name__
-        #if sys.getrefcount(self.obj) == 2:
-        #    self.obj = None
-        #    self.list_.remove(self)
 
     def __del__(self):
         print 'del send_obj'
@@ -151,17 +144,32 @@ class Subscriber(object):
         return self.send_obj[name].obj
 
     def subscribe(self, send_obj):
-        if isinstance(send_obj, basestring):
-            send_obj = sender[send_obj]
-        elif isinstance(send_obj, int):
-            send_obj = sender[send_obj]
-        else:
-            send_obj = sender[id(send_obj)]
-        send_obj.subscribe(self)
+        send_obj = self._get_send_obj(send_obj)
         class_name = type(send_obj.obj).__name__
         if class_name in self.send_obj:
             self.send_obj[class_name].unsubscribe(self)
+            print 'call unsub'
+            #self.unsubscribe(send_obj)
+        send_obj.subscribe(self)
         self.send_obj[class_name] = send_obj #второй словарь с id для не синглтонов
+        print 'sub', class_name
+
+    #def unsubscribe(self, send_obj):
+    #    print send_obj, sender
+    #    send_obj = self._get_send_obj(send_obj)
+    #    class_name = type(send_obj.obj).__name__
+    #    send_obj.unsubscribe(self)
+    #    del self.send_obj[class_name]
+    #    print 'unsub', class_name
+
+    def _get_send_obj(self, data):
+        if isinstance(data, basestring):
+            return sender[data]
+        elif isinstance(data, int):
+            return sender[data]
+        elif id(data) in sender:
+            return sender[id(data)]
+        return data
 
     def send(self, data):
         try:

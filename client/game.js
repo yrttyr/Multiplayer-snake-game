@@ -89,8 +89,10 @@ function Game() {
         'base': new Gamemap,
         'ground': new Gamemap
     };
-    //this.objects[0] = new objectTypes.image({'image': 'empty'});
-    //this.objects[0].gamemap = 'ground';
+    this.objects[0] = new objectTypes.empty();
+    this.objects[0].gamemap = 'base';
+    this.objects[1] = new objectTypes.image({'image': 'empty'});
+    this.objects[1].gamemap = 'ground';
 
     this.setSize = function(x, y) {
         this.SizeX = x;
@@ -166,13 +168,17 @@ function Game() {
             var base = this.gamemap['base'].get(coord) || {'indef': 0, 'type': ''};
 
 
-
             var ground_obj = this.objects[ground.indef];
-            if(ground_obj == undefined) {
-                console.error(this.objects);
-                console.error(ground.indef);
+
+            try {
+                ground_obj.draw(coord[0], coord[1], ground.type);
             }
-            ground_obj.draw(coord[0], coord[1], ground.type);
+            catch (e) {
+                console.error('######################################');
+                console.error('obj', this.objects);
+                console.error('indef', ground.indef);
+                throw 'ytesssssssssssssssssssssssss';
+            }
 
             var base_obj = this.objects[base.indef];
             base_obj.draw(coord[0], coord[1], base.type);

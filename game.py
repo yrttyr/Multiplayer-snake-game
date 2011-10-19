@@ -69,9 +69,8 @@ class MapsList(list):
 
 maps_list = MapsList()
 
-@sender.send_cls()
-class Game(object):
-    def __init__(self, cont, key):
+class AbstractGame(object):
+    def __init__(self, cont):
         self.cont = cont
         self.objects = []
         self.new_objects = []
@@ -82,11 +81,6 @@ class Game(object):
                 yield a
                 a += 1
         self.get_objectId = getId().next
-
-        self.load_map(maps_list[key])
-        rabbit = game_objects.Rabbit(self.get_objectId(), self.gamemap, ())
-        self.objects.append(rabbit)
-        self.greenlet = spawn(self.step)
 
     def load_map(self, name):
         with open('maps/' + name) as f:
@@ -112,6 +106,17 @@ class Game(object):
         self.objects.append(obj)
         self.new_objects.append(obj)
         return obj
+
+
+@sender.send_cls()
+class Game(AbstractGame):
+    def __init__(self, cont, map_key):
+        super(Game, self).__init__(cont)
+
+        self.load_map(maps_list[map_key])
+        rabbit = game_objects.Rabbit(self.get_objectId(), self.gamemap, ())
+        self.objects.append(rabbit)
+        self.greenlet = spawn(self.step)
 
     def send_start(self):
         self.send_gameinfo()
@@ -151,11 +156,11 @@ class Game(object):
             sleep(0.04)
 
 @sender.send_cls()
-class MapEditor(object):
-    def __init__(self, cont):
-        self.cont = cont
-        self.objects = []
-        self.gamemap = GameMapContainer(10, 10)
+class MapEditor(AbstractGame):
+    def __init__(self, cont, map_key=None):
+        super(MapEditor, self).__init__(cont)
+        if map_key is None:
+            self.gamemap = GameMapContainer(10, 10)
 
         empty_obj = self.add_object('EmptyObject')
         ground_obj = self.add_object('Ground')
@@ -163,11 +168,6 @@ class MapEditor(object):
         self.gamemap['ground'] = GameMap(ground_obj)
         self.add_object('Wall')
         self.add_object('StartPosition')
-
-    def add_object(self, name, coord=(), *arg, **kwarg):
-        obj = getattr(game_objects, name)(self.gamemap, coord, *arg, **kwarg)
-        self.objects.append(obj)
-        return obj
 
     def send_start(self):
         self.send_all_drawdata()
