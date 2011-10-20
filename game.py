@@ -60,11 +60,13 @@ class MapsList(list):
 
 maps_list = MapsList()
 
+@sender.send_cls()
 class AbstractGame(object):
     def __init__(self, cont):
         self.cont = cont
         self.objects = []
         self.new_objects = []
+        self.map_edit = False
 
         def getId():
             a = 0
@@ -98,20 +100,9 @@ class AbstractGame(object):
         self.new_objects.append(obj)
         return obj
 
-
-@sender.send_cls()
-class Game(AbstractGame):
-    def __init__(self, cont, map_key):
-        super(Game, self).__init__(cont)
-
-        self.load_map(maps_list[map_key])
-        rabbit = game_objects.Rabbit(self.get_objectId(), self.gamemap, ())
-        self.objects.append(rabbit)
-        self.greenlet = spawn(self.step)
-
     @sender.send_meth('gameinfo', 1)
     def send_gameinfo(self):
-        return self.gamemap.x, self.gamemap.y
+        return self.gamemap.x, self.gamemap.y, self.map_edit
 
     @sender.send_meth('allcoord', 3)
     def send_all_coord(self):
@@ -128,6 +119,17 @@ class Game(AbstractGame):
     @sender.send_meth('drawdata')
     def send_new_drawdata(self):
         return [obj.get_drawdata() for obj in self.new_objects]
+
+@sender.send_cls()
+class Game(AbstractGame):
+    def __init__(self, cont, map_key):
+        super(Game, self).__init__(cont)
+        self.map_edit = True
+
+        self.load_map(maps_list[map_key])
+        rabbit = game_objects.Rabbit(self.get_objectId(), self.gamemap, ())
+        self.objects.append(rabbit)
+        self.greenlet = spawn(self.step)
 
     #@sender.recv_meth()
     def add_player(self, coord, direct):
@@ -148,20 +150,12 @@ class MapEditor(AbstractGame):
         if map_key is None:
             self.gamemap = GameMapContainer(10, 10)
 
-        empty_obj = self.add_object('EmptyObject')
-        ground_obj = self.add_object('Ground')
-        self.gamemap['base'] = GameMap(empty_obj)
-        self.gamemap['ground'] = GameMap(ground_obj)
-        self.add_object('Wall')
-        self.add_object('StartPosition')
-
-    @sender.send_meth('mapinfo', 2)
-    def send_gameinfo(self):
-        return self.gamemap.x, self.gamemap.y
-
-    @sender.send_meth('drawdata', 1)
-    def send_all_drawdata(self):
-        return [obj.get_drawdata() for obj in self.objects]
+            empty_obj = self.add_object('EmptyObject')
+            ground_obj = self.add_object('Ground')
+            self.gamemap['base'] = GameMap(empty_obj)
+            self.gamemap['ground'] = GameMap(ground_obj)
+            self.add_object('Wall')
+            self.add_object('StartPosition')
 
     @sender.recv_meth()
     def save_map(self, sub, data):

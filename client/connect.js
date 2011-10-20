@@ -67,7 +67,12 @@ function switch_parse(data) {
     else if(data[0] == 'gameinfo') {
         window.game = new Game();
         game.setSize(data[1][0], data[1][1]);
-        game.disableMapEditor();
+        if(data[2]) {
+            game.initMapEditor();
+        }
+        else {
+            game.disableMapEditor();
+        }
     }
     else if(data[0] == 'mapslist') {
         var el = document.getElementById('mapslist');
@@ -77,10 +82,5 @@ function switch_parse(data) {
             opt.value = key;
             el.appendChild(opt);
         }
-    }
-    else if(data[0] == 'mapinfo') {
-        window.game = new Game();
-        game.setSize(data[1][0], data[1][1]);
-        game.initMapEditor();
     }
 }

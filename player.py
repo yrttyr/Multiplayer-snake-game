@@ -3,11 +3,8 @@
 
 import json
 
-#from game import sender#, Game
-from sender import sender#, Game
 
-#import game
- #////////////////
+from sender import sender
 
 @sender.send_cls()
 class Player(object):

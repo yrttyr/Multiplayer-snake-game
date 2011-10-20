@@ -130,24 +130,22 @@ function Game() {
         document.getElementById('games').style.display = 'none';
         var base_div = document.getElementById('base_layer');
         var ground_div = document.getElementById('ground_layer');
-        for(var key in this.objects) {
-            var src = this.objects[key].getSRC();
-            var el = document.createElement('div');
-            //el.setAttribute('id', indef);
-            if(this.objects[key].gamemap == 'base') {
-                base_div.appendChild(el);
-            }
-            else {
-                ground_div.appendChild(el);
-            }
-            el.innerHTML = '<img src="'+src+'" border=1 align="left" onclick="game.setSelectElement('+key+'); return false";/>';
-        }
     };
-
+    this.mapEditorAddButton = function(obj, indef) {
+        var src = obj.getSRC();
+        var el = document.createElement('div');
+        //el.setAttribute('id', indef);
+        if(obj.gamemap == 'base') {
+            base_div.appendChild(el);
+        }
+        else {
+            ground_div.appendChild(el);
+        }
+        el.innerHTML = '<img src="'+src+'" border=1 align="left" onclick="game.setSelectElement('+indef+'); return false";/>';
+    };
     this.setSelectElement = function(num) {
         this.selectElement = num;
     };
-
     this.saveMap = function() {
         var base = game.gamemap['base'].getListIdAndCoord();
         var ground = game.gamemap['ground'].getListIdAndCoord();
@@ -159,6 +157,9 @@ function Game() {
 ////////////
     this.addObjectInMap = function(indef, coord, info) {
         game.gamemap[game.objects[indef].gamemap].set(coord, indef, info);
+        if(this.mapEdit) {
+            this.mapEditorAddButton(game.objects[indef], indef);
+        }
     };
 
     this.drawAll = function() {

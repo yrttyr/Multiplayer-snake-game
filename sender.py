@@ -3,31 +3,19 @@
 
 from weakref import WeakValueDictionary, WeakSet, ref
 from collections import namedtuple, defaultdict
-from errno import EBADF
 import json
 
 class Sender(WeakValueDictionary):
     def send_cls(self, singleton=False):
         def inner(_cls):
-            send_meth, recv_meth = self.get_methods(_cls)
+            send_meth, recv_meth = self. get_methods(_cls)
             for meth in send_meth:
                 self.replace_sendfun(meth)
             for meth in recv_meth:
                 self.replace_recvfun(meth)
 
             recvmeth_names = [meth.name for meth in recv_meth]
-
-            #call_with_conn = [meth.__name__ for meth in send_meth
-            #                  if meth.call_with_conn]
-            dd= defaultdict(list)
-            for meth in send_meth:
-                if meth.call_priority:
-                    dd[meth.call_priority].append(meth.__name__)
-            keys = dd.keys()
-            keys.sort()
-            call_with_conn = []
-            for key in keys:
-                call_with_conn.extend(dd[key])
+            call_with_conn = self.get_call_with_conn(send_meth)
 
             self.replace_init(_cls, recvmeth_names,
                               call_with_conn, singleton)
@@ -45,6 +33,19 @@ class Sender(WeakValueDictionary):
             elif hasattr(atr, '_recvmeth') and atr._recvmeth:
                 recv.append(atr)
         return send, recv
+
+    def get_call_with_conn(self, meths):
+        dd = defaultdict(list)
+        for meth in meths:
+            if meth.call_priority:
+                dd[meth.call_priority].append(meth.__name__)
+        keys = dd.keys()
+        keys.sort()
+
+        call_with_conn = []
+        for key in keys:
+            call_with_conn.extend(dd[key])
+        return call_with_conn
 
     def replace_init(_sender, _cls, recvmeth_names,
                      call_with_conn, singleton):
@@ -69,7 +70,12 @@ class Sender(WeakValueDictionary):
         _cls.__del__ = tmp
 
     def replace_sendfun(_sender, _fun):
-        def tmp(self, _send_to=[], *args, **kwargs):
+        def tmp(self, *args, **kwargs):
+            if '_send_to' in kwargs:
+                _send_to = kwargs['_send_to']
+                del kwargs['_send_to']
+            else:
+                _send_to = []
             data = _fun(self, *args, **kwargs)
             if not data:
                 return
@@ -108,7 +114,7 @@ class SendObj(object):
         self.keep_obj = None
         self.recvmeth_names = recvmeth_names
         self.call_with_conn = call_with_conn
-        print 'call_with_conn', self.call_with_conn
+        print 'call_with_conn', type(self.obj).__name__, self.call_with_conn
         self.subscribers = WeakSet()
         self.list_.append(self)
 
@@ -122,7 +128,7 @@ class SendObj(object):
     def subscribe(self, sub):
         self.subscribers.add(sub)
         for meth_name in self.call_with_conn:
-            getattr(self.obj, meth_name)([sub])
+            getattr(self.obj, meth_name)(_send_to=[sub])
 
         if self.subscribers:
             self.keep_obj = self.obj
