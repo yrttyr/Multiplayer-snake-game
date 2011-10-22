@@ -152,13 +152,14 @@ function Game() {
         var data = {'objects': base.concat(ground)};
         data['SizeX'] = game.SizeX;
         data['SizeY'] = game.SizeY;
-       connect.sendData(['save_map', data]);
+        connect.sendData(['save_map', data]);
     };
 ////////////
     this.addObjectInMap = function(indef, coord, info) {
-        game.gamemap[game.objects[indef].gamemap].set(coord, indef, info);
+        var object = game.objects[indef];
+        game.gamemap[object.gamemap].set(coord, indef, info);
         if(this.mapEdit) {
-            this.mapEditorAddButton(game.objects[indef], indef);
+            this.mapEditorAddButton(object, indef);
         }
     };
 

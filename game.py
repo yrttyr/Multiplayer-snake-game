@@ -11,9 +11,10 @@ from sender import sender
 from gamemap import GameMap, GameMapContainer
 import game_objects
 
-
 @sender.send_cls(singleton=True)
 class GamesList(list):
+    call_with_conn = 'send_all_games',
+
     def __init__(self):
         self.change = []
         self.greenlet = spawn(self.step)
@@ -29,7 +30,7 @@ class GamesList(list):
         self.change.append(game)
         return game
 
-    @sender.send_meth('gamelist', 1)
+    @sender.send_meth('gamelist')
     def send_all_games(self):
         return [(id(game), game.gamemap.x, game.gamemap.y)
                 for game in self]
@@ -50,11 +51,13 @@ games_list = GamesList()
 
 @sender.send_cls(singleton=True)
 class MapsList(list):
+    call_with_conn = 'send_all_games',
+
     def __init__(self):
         self.extend(os.listdir('maps/'))
         print self
 
-    @sender.send_meth('mapslist', 1)
+    @sender.send_meth('mapslist')
     def send_all_games(self):
         return [map_name for map_name in self]
 
@@ -100,11 +103,11 @@ class AbstractGame(object):
         self.new_objects.append(obj)
         return obj
 
-    @sender.send_meth('gameinfo', 1)
+    @sender.send_meth('gameinfo')
     def send_gameinfo(self):
         return self.gamemap.x, self.gamemap.y, self.map_edit
 
-    @sender.send_meth('allcoord', 3)
+    @sender.send_meth('allcoord')
     def send_all_coord(self):
         return [obj.get_coord() for obj in self.objects]
 
@@ -112,7 +115,7 @@ class AbstractGame(object):
     def send_change_coord(self):
         return self.gamemap.get_changed_data()
 
-    @sender.send_meth('drawdata', 2)
+    @sender.send_meth('drawdata')
     def send_all_drawdata(self):
         return [obj.get_drawdata() for obj in self.objects]
 
@@ -122,6 +125,8 @@ class AbstractGame(object):
 
 @sender.send_cls()
 class Game(AbstractGame):
+    call_with_conn = 'send_gameinfo', 'send_all_drawdata', 'send_all_coord'
+
     def __init__(self, cont, map_key):
         super(Game, self).__init__(cont)
         self.map_edit = True
@@ -131,7 +136,6 @@ class Game(AbstractGame):
         self.objects.append(rabbit)
         self.greenlet = spawn(self.step)
 
-    #@sender.recv_meth()
     def add_player(self, coord, direct):
         return self.add_object('Snake', (coord,), direct)
 

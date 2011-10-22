@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
-
-
 from sender import sender
 
 @sender.send_cls()

@@ -6,18 +6,24 @@ from collections import namedtuple, defaultdict
 import json
 
 class Sender(WeakValueDictionary):
-    def send_cls(self, singleton=False):
+    def send_cls(self, group_name=None, singleton=False):
         def inner(_cls):
-            send_meth, recv_meth = self. get_methods(_cls)
+            if group_name is None:
+                group_name_local = _cls.__name__
+            else:
+                group_name_local = group_name
+            print group_name_local
+
+            send_meth, recv_meth = self.get_methods(_cls)
             for meth in send_meth:
                 self.replace_sendfun(meth)
             for meth in recv_meth:
                 self.replace_recvfun(meth)
 
             recvmeth_names = [meth.name for meth in recv_meth]
-            call_with_conn = self.get_call_with_conn(send_meth)
+            call_with_conn = getattr(_cls, 'call_with_conn', ())
 
-            self.replace_init(_cls, recvmeth_names,
+            self.replace_init(_cls, group_name_local, recvmeth_names,
                               call_with_conn, singleton)
             self.replace_del(_cls)
             return _cls
@@ -34,27 +40,16 @@ class Sender(WeakValueDictionary):
                 recv.append(atr)
         return send, recv
 
-    def get_call_with_conn(self, meths):
-        dd = defaultdict(list)
-        for meth in meths:
-            if meth.call_priority:
-                dd[meth.call_priority].append(meth.__name__)
-        keys = dd.keys()
-        keys.sort()
-
-        call_with_conn = []
-        for key in keys:
-            call_with_conn.extend(dd[key])
-        return call_with_conn
-
-    def replace_init(_sender, _cls, recvmeth_names,
+    def replace_init(_sender, _cls, group_name, recvmeth_names,
                      call_with_conn, singleton):
         _old_init = _cls.__init__
         def tmp(self, *args, **kwargs):
-            _send_obj = SendObj(self, recvmeth_names, call_with_conn)
-            _sender[id(self)] = _send_obj
-            if singleton:
-                _sender[_cls.__name__] = _send_obj
+            if id(self) not in _sender: # Защита при вызове __init__ родителя
+                _send_obj = SendObj(self, group_name, recvmeth_names, call_with_conn)
+                _sender[id(self)] = _send_obj
+                if singleton:
+                    _sender[_cls.__name__] = _send_obj
+
             _old_init(self, *args, **kwargs)
         _cls.__init__ = tmp
 
@@ -87,11 +82,10 @@ class Sender(WeakValueDictionary):
             return _fun(self, *args, **kwargs)  # Нужно ловля экцептов на неправильные аргументы
         setattr(_fun.im_class, _fun.__name__, tmp)
 
-    def send_meth(self, name, call_priority=0):
+    def send_meth(self, name):
         def inner(_meth):
             _meth._sendmeth = True
             _meth.name = name
-            _meth.call_priority = call_priority
             return _meth
         return inner
 
@@ -109,9 +103,10 @@ sender = Sender()
 
 class SendObj(object):
     list_ = []
-    def __init__(self, obj, recvmeth_names, call_with_conn):
+    def __init__(self, obj, group_name, recvmeth_names, call_with_conn):
         self._obj = ref(obj)
         self.keep_obj = None
+        self.group_name = group_name
         self.recvmeth_names = recvmeth_names
         self.call_with_conn = call_with_conn
         print 'call_with_conn', type(self.obj).__name__, self.call_with_conn
@@ -166,14 +161,13 @@ class Subscriber(object):
 
     def subscribe(self, send_obj):
         send_obj = self._get_send_obj(send_obj)
-        class_name = type(send_obj.obj).__name__
-        if class_name in self.send_obj:
-            self.send_obj[class_name].unsubscribe(self)
+        group_name = send_obj.group_name
+        if group_name in self.send_obj:
+            self.send_obj[group_name].unsubscribe(self)
             print 'call unsub'
         send_obj.subscribe(self)
-        self.send_obj[class_name] = send_obj
-        print 'sub', class_name
-        print 'sub', class_name
+        self.send_obj[group_name] = send_obj
+        print 'sub', group_name
 
     def _get_send_obj(self, data):
         if isinstance(data, basestring):
