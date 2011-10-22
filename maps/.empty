@@ -1,0 +1,11 @@
+{
+    "objects": {
+        "Wall": [],
+        "EmptyObject": [],
+        "StartPosition": [],
+        "Ground": []
+    },
+
+    "SizeX": 20,
+    "SizeY": 20
+}

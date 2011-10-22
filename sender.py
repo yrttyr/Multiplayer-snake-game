@@ -12,7 +12,6 @@ class Sender(WeakValueDictionary):
                 group_name_local = _cls.__name__
             else:
                 group_name_local = group_name
-            print group_name_local
 
             send_meth, recv_meth = self.get_methods(_cls)
             for meth in send_meth:
@@ -109,7 +108,6 @@ class SendObj(object):
         self.group_name = group_name
         self.recvmeth_names = recvmeth_names
         self.call_with_conn = call_with_conn
-        print 'call_with_conn', type(self.obj).__name__, self.call_with_conn
         self.subscribers = WeakSet()
         self.list_.append(self)
 
@@ -164,7 +162,7 @@ class Subscriber(object):
         group_name = send_obj.group_name
         if group_name in self.send_obj:
             self.send_obj[group_name].unsubscribe(self)
-            print 'call unsub'
+            print 'unsub call'
         send_obj.subscribe(self)
         self.send_obj[group_name] = send_obj
         print 'sub', group_name
@@ -182,8 +180,6 @@ class Subscriber(object):
         try:
             self.connect.send(data)
         except EnvironmentError as e:
-            print 'EBADF error'
-            print e
             self.connect.subscriber = None
             print 'end error'
 

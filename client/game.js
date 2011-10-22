@@ -128,18 +128,18 @@ function Game() {
         this.mapEdit = true;
         document.getElementById('etitorTools').style.display = 'block';
         document.getElementById('games').style.display = 'none';
-        var base_div = document.getElementById('base_layer');
-        var ground_div = document.getElementById('ground_layer');
+        this.base_div = document.getElementById('base_layer');
+        this.ground_div = document.getElementById('ground_layer');
     };
     this.mapEditorAddButton = function(obj, indef) {
         var src = obj.getSRC();
         var el = document.createElement('div');
         //el.setAttribute('id', indef);
         if(obj.gamemap == 'base') {
-            base_div.appendChild(el);
+            this.base_div.appendChild(el);
         }
         else {
-            ground_div.appendChild(el);
+            this.ground_div.appendChild(el);
         }
         el.innerHTML = '<img src="'+src+'" border=1 align="left" onclick="game.setSelectElement('+indef+'); return false";/>';
     };
@@ -156,11 +156,8 @@ function Game() {
     };
 ////////////
     this.addObjectInMap = function(indef, coord, info) {
-        var object = game.objects[indef];
-        game.gamemap[object.gamemap].set(coord, indef, info);
-        if(this.mapEdit) {
-            this.mapEditorAddButton(object, indef);
-        }
+        var gamemap_name = game.objects[indef].gamemap;
+        game.gamemap[gamemap_name].set(coord, indef, info);
     };
 
     this.drawAll = function() {
@@ -183,5 +180,9 @@ function Game() {
     this.updateDrawdata = function(data) {
         this.objects[data['indef']] = new objectTypes[data['drawtype']](data);
         this.objects[data['indef']].gamemap = data['map_layer']
+
+        if(game.mapEdit) {
+            game.mapEditorAddButton(this.objects[data['indef']], data['indef']);
+        }
     };
 }

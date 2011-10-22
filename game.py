@@ -54,8 +54,9 @@ class MapsList(list):
     call_with_conn = 'send_all_games',
 
     def __init__(self):
-        self.extend(os.listdir('maps/'))
-        print self
+        files = os.listdir('maps/')
+        files = [f for f in files if f[0] != '.']
+        self.extend(files)
 
     @sender.send_meth('mapslist')
     def send_all_games(self):
@@ -129,7 +130,6 @@ class Game(AbstractGame):
 
     def __init__(self, cont, map_key):
         super(Game, self).__init__(cont)
-        self.map_edit = True
 
         self.load_map(maps_list[map_key])
         rabbit = game_objects.Rabbit(self.get_objectId(), self.gamemap, ())
@@ -147,19 +147,15 @@ class Game(AbstractGame):
                 del self.new_objects[:]
             sleep(0.04)
 
-@sender.send_cls()
+@sender.send_cls('Game')
 class MapEditor(AbstractGame):
+    call_with_conn = 'send_gameinfo', 'send_all_drawdata', 'send_all_coord'
+
     def __init__(self, cont, map_key=None):
         super(MapEditor, self).__init__(cont)
+        self.map_edit = True
         if map_key is None:
-            self.gamemap = GameMapContainer(10, 10)
-
-            empty_obj = self.add_object('EmptyObject')
-            ground_obj = self.add_object('Ground')
-            self.gamemap['base'] = GameMap(empty_obj)
-            self.gamemap['ground'] = GameMap(ground_obj)
-            self.add_object('Wall')
-            self.add_object('StartPosition')
+            self.load_map('.empty')
 
     @sender.recv_meth()
     def save_map(self, sub, data):
