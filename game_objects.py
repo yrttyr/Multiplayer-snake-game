@@ -103,13 +103,13 @@ class Snake(GameObject):
         self.greenlet = spawn(self.step)
 
     def create_object(self, coord):
-        info = str(self.rotation) + '_'
+        info = str(self.rotation) + 'h'
         self.pieces.append(MapObject(coord[0], self, self.gamemap[self.map_layer], info))
 
     def step(self):
         while True:
             if self.len < 2:
-                self.dead()
+                self.kill()
 
             if self.len < len(self.pieces):
                 self.del_last()
@@ -120,7 +120,7 @@ class Snake(GameObject):
 
             sleep(self.speed)
 
-    def dead(self):
+    def kill(self):
         print 'snake dead'
         self.greenlet.kill()
 
@@ -131,7 +131,12 @@ class Snake(GameObject):
     def add_new(self, coord):
         info = '_' + str((self.rotation + 2) % 4)
         self.pieces.append(MapObject(coord, self, self.gamemap[self.map_layer], info))
-        self.pieces[-2].info = self.pieces[-2].info[1] + str(self.rotation)
+
+        if self.pieces[-2].info[1] == 'b' or self.pieces[-2].info[1] == 'h':
+            self.pieces[-2].info = 'b' + str(self.rotation)
+        else:
+            self.pieces[-2].info = self.pieces[-2].info[1] + str(self.rotation)
+        print 'info piect', self.pieces[-2].info[1] + str(self.rotation)
 
     def test_coll(self, coord):
         map_object = self.gamemap[self.map_layer][coord]
