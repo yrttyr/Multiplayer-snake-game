@@ -14,6 +14,9 @@ function Gamemap(default_obj_id) {
         'dict': {},
         'default_obj_id': default_obj_id,
 
+        'getDefault': function() {
+            return{'indef':  this.default_obj_id, 'type': ''};
+        },
         'set': function(k, x, type) {
             this.dict[k] = {'indef': x, 'type': type || ''};
             game.needDraw.push(k);
@@ -92,11 +95,6 @@ function Game(layer_info) {
         this.gamemap[name] = new Gamemap(layer_info[name]);
     }
 
-    /*this.objects[0] = new objectTypes.empty();
-    this.objects[0].gamemap = 'base';
-    this.objects[1] = new objectTypes.image({'image': 'empty'});
-    this.objects[1].gamemap = 'ground';*/
-
     this.setSize = function(x, y) {
         this.SizeX = x;
         this.SizeY = y;
@@ -166,13 +164,12 @@ function Game(layer_info) {
     this.drawAll = function() {
         for(var key in game.needDraw) {
             var coord = game.needDraw[key];
-            var ground = this.gamemap['ground'].get(coord) || {'indef':  this.gamemap['ground'].default_obj_id, 'type': ''}; //{'indef': 1, 'type': ''};
-            var base = this.gamemap['base'].get(coord) || {'indef':  this.gamemap['base'].default_obj_id, 'type': ''}; // {'indef': 0, 'type': ''};
-
+            var ground = this.gamemap['ground'].get(coord) || this.gamemap['ground'].getDefault();
+            var base = this.gamemap['base'].get(coord) || this.gamemap['base'].getDefault();
 
             var ground_obj = this.objects[ground.indef];
             ground_obj.draw(coord[0], coord[1], ground.type);
-            console.error(coord, ground, base);
+
             var base_obj = this.objects[base.indef];
             base_obj.draw(coord[0], coord[1], base.type);
 
