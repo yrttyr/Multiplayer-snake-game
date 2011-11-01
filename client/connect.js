@@ -65,9 +65,9 @@ function switch_parse(data) {
         })
     }
     else if(data[0] == 'gameinfo') {
-        window.game = new Game();
+        window.game = new Game(data[1][2]);
         game.setSize(data[1][0], data[1][1]);
-        if(data[1][2]) {
+        if(data[1][3]) {
             game.initMapEditor();
         }
         else {

@@ -72,41 +72,31 @@ class AbstractGame(object):
         self.new_objects = []
         self.map_edit = False
 
-        def getId():
-            a = 0
-            while True:
-                yield a
-                a += 1
-        self.get_objectId = getId().next
-
     def load_map(self, name):
         with open('maps/' + name) as f:
             data = json.load(f)
 
         self.gamemap = GameMapContainer(data['SizeX'], data['SizeY'])
+        for layer_name in data['layers'].keys():
+            self.gamemap[layer_name] = GameMap()
 
-        empty_obj = self.add_object('EmptyObject')
-        ground_obj = self.add_object('Ground')
-        self.gamemap['base'] = GameMap(empty_obj)
-        self.gamemap['ground'] = GameMap(ground_obj)
+        for name, coord in data['objects']:
+            self.add_object(name, coord)
 
-        objects = data['objects']
-        if 'Wall' in objects:
-            self.add_object('Wall', objects['Wall'])
-        if 'StartPosition' in objects:
-            self.add_object('StartPosition', objects['StartPosition'])
+        for layer_name, obj_id in data['layers'].items():
+            self.gamemap[layer_name].set_default(self.objects[obj_id])
 
     def add_object(self, name, coord=(), *arg, **kwarg):
         obj_class = getattr(game_objects, name)
-        obj = obj_class(self.get_objectId(), self.gamemap,
-                        coord, *arg, **kwarg)
+        obj = obj_class(self.gamemap, coord, *arg, **kwarg)
         self.objects.append(obj)
         self.new_objects.append(obj)
         return obj
 
     @sender.send_meth('gameinfo')
     def send_gameinfo(self):
-        return self.gamemap.x, self.gamemap.y, self.map_edit
+        return self.gamemap.x, self.gamemap.y, \
+               self.gamemap.get_layers_data(), self.map_edit
 
     @sender.send_meth('allcoord')
     def send_all_coord(self):
@@ -132,7 +122,7 @@ class Game(AbstractGame):
         super(Game, self).__init__(cont)
 
         self.load_map(maps_list[map_key])
-        rabbit = game_objects.Rabbit(self.get_objectId(), self.gamemap, ())
+        rabbit = game_objects.Rabbit(self.gamemap, ())
         self.objects.append(rabbit)
         self.greenlet = spawn(self.step)
 
@@ -160,14 +150,20 @@ class MapEditor(AbstractGame):
     @sender.recv_meth()
     def save_map(self, sub, data):
         map_dict = {}
-        map_dict['SizeX'] = data['SizeX'];
-        map_dict['SizeY'] = data['SizeY'];
-        map_dict['objects'] = {};
+        map_dict['SizeX'] = data['SizeX']
+        map_dict['SizeY'] = data['SizeY']
+
+        map_dict['layers'] = {}
+        map_dict['objects'] = []
         for obj in self.objects:
-            map_dict['objects'][type(obj).__name__] = [
-                coord for indef, coord in data['objects']
-                if obj.indef == indef
-            ]
+            map_dict['objects'].append(
+                (type(obj).__name__,
+                [coord for indef, coord in data['objects']
+                if obj.indef == indef])
+            )
+            for name, layer in self.gamemap.items():
+                if layer.default_object.obj is obj:
+                    map_dict['layers'][name] = len(map_dict['objects']) - 1
 
         name = md5(str(map_dict)).hexdigest()
         with open('maps/' + name, 'w') as f:

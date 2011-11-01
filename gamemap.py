@@ -38,6 +38,12 @@ class GameMapContainer(dict):
     def changed(self):
         return any(gamemap.change for gamemap in self.values())
 
+    def get_layers_data(self):
+        d = {}
+        for name, gamemap in self.items():
+            d[name] = gamemap.default_object.obj.indef
+        return d
+
     def get_changed_data(self):
         data = []
         for gamemap in self.values():
@@ -47,18 +53,19 @@ class GameMapContainer(dict):
 
 class GameMap(WeakValueDictionary):
     #slots
-    def __init__(self, default_object):
+    def __init__(self):
         WeakValueDictionary.__init__(self)
-
-        self.default_object = MapObject('', default_object, self)
         self.change = []
+
+    def set_default(self, default_object):
+        self.default_object = MapObject(None, default_object)
 
     #def __setitem__(self, key, value):
     #   WeakValueDictionary.__setitem__(self, key, value)
 
     def __getitem__(self, key):
-        if not isinstance(key, str):
-            key = key[0] % self.x, key[1] % self.y
+        #if not isinstance(key, str):
+        key = key[0] % self.x, key[1] % self.y
         return self.get(key, self.default_object)
 
     def get_change_coord(self):
@@ -70,18 +77,19 @@ class GameMap(WeakValueDictionary):
 
 class MapObject(object):
     #slots
-    def __init__(self, coord, obj, gamemap, info_val = ''):
+    def __init__(self, coord, obj, info_val = ''):
         self.obj = obj
-        self.gamemap = gamemap
         self._info = info_val
 
-        if not isinstance(coord, str):
-            self.coord = Coord(coord[0] % self.gamemap.x,
-                                coord[1] % self.gamemap.y)
-            self.gamemap.change.append(self.coord)
-        else:
-            self.coord = coord
-        self.gamemap[self.coord] = self
+        if coord:
+            self.coord = Coord(coord[0] % self.layer.x,
+                                coord[1] % self.layer.y)
+            self.layer.change.append(self.coord)
+            self.layer[self.coord] = self
+
+    @property
+    def layer(self):
+        return self.obj.gamemap[self.obj.map_layer]
 
     @property
     def info(self):
@@ -91,9 +99,9 @@ class MapObject(object):
     def info(self, value):
         if self._info != value:
             self._info = value
-            self.gamemap.change.append(self.coord)
+            self.layer.change.append(self.coord)
 
     def __del__(self):
-        self.gamemap.change.append(self.coord)
+        self.layer.change.append(self.coord)
 
 

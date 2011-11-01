@@ -2,14 +2,29 @@
 # -*- coding: utf-8 -*-
 
 from sender import sender
+from weakref import ref
 
 @sender.send_cls()
 class Player(object):
     tmp = 87, 68, 83, 65
     def __init__(self):
-        self.snake = None
+        self._snake = None
         self.game = None
         self.start_coord = ()
+
+    @property
+    def snake(self):
+        if self._snake:
+            return self._snake()
+        return None
+
+    @snake.setter
+    def snake(self, obj):
+        self._snake = ref(obj)
+
+    @snake.deleter
+    def snake(self):
+        self._snake = None
 
     @sender.recv_meth()
     def create_map(self, sub):
@@ -25,7 +40,7 @@ class Player(object):
     def connect_game(self, sub, game):         #нужен тест, что это именно гаме
         sub.subscribe(game)
         self.game = sub.get_sendobj('Game')
-        self.snake = None
+        del self.snake
         self.start_coord = ()
 
     @sender.recv_meth()

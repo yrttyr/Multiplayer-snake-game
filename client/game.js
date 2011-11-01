@@ -9,9 +9,10 @@ var needDraw_fill = function(X, Y) {
     }
 };
 
-function Gamemap() {
+function Gamemap(default_obj_id) {
     return { //Проверка на отсутствие повторов в needDraw
         'dict': {},
+        'default_obj_id': default_obj_id,
 
         'set': function(k, x, type) {
             this.dict[k] = {'indef': x, 'type': type || ''};
@@ -78,21 +79,23 @@ function createGame() {
     connect.sendData(['create_game', parseInt(value)]);
 }
 
-function Game() {
+function Game(layer_info) {
     this.canvas = document.getElementById('canvas');
     this.canvas.onmousedown = canvasKeyDown;
     this.ctx = this.canvas.getContext('2d');
 
     this.objects = {};
     this.needDraw = [];
-    this.gamemap = {
-        'base': new Gamemap,
-        'ground': new Gamemap
-    };
-    this.objects[0] = new objectTypes.empty();
+
+    this.gamemap = {};
+    for(var name in layer_info) {
+        this.gamemap[name] = new Gamemap(layer_info[name]);
+    }
+
+    /*this.objects[0] = new objectTypes.empty();
     this.objects[0].gamemap = 'base';
     this.objects[1] = new objectTypes.image({'image': 'empty'});
-    this.objects[1].gamemap = 'ground';
+    this.objects[1].gamemap = 'ground';*/
 
     this.setSize = function(x, y) {
         this.SizeX = x;
@@ -163,16 +166,16 @@ function Game() {
     this.drawAll = function() {
         for(var key in game.needDraw) {
             var coord = game.needDraw[key];
-            var ground = this.gamemap['ground'].get(coord) || {'indef': 1, 'type': ''};
-            var base = this.gamemap['base'].get(coord) || {'indef': 0, 'type': ''};
+            var ground = this.gamemap['ground'].get(coord) || {'indef':  this.gamemap['ground'].default_obj_id, 'type': ''}; //{'indef': 1, 'type': ''};
+            var base = this.gamemap['base'].get(coord) || {'indef':  this.gamemap['base'].default_obj_id, 'type': ''}; // {'indef': 0, 'type': ''};
 
 
             var ground_obj = this.objects[ground.indef];
             ground_obj.draw(coord[0], coord[1], ground.type);
-
+            console.error(coord, ground, base);
             var base_obj = this.objects[base.indef];
             base_obj.draw(coord[0], coord[1], base.type);
-            //console.error(coord, ground.indef, base.indef);
+
             game.needDraw.splice(key, 1);
         }
     };

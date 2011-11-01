@@ -1,11 +1,14 @@
 {
-    "objects": {
-        "Wall": [],
-        "EmptyObject": [],
-        "StartPosition": [],
-        "Ground": []
-    },
-
+    "objects": [
+        ["Ground", []],
+        ["EmptyObject", []],
+        ["Wall", []],
+        ["StartPosition", []]
+    ],
     "SizeX": 20,
-    "SizeY": 20
+    "SizeY": 20,
+    "layers": {
+        "base": 1,
+        "ground": 0
+    }
 }
