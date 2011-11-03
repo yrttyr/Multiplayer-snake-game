@@ -119,6 +119,7 @@ class SendObj(object):
         self.list_.remove(self)
 
     def subscribe(self, sub):
+        print sub
         self.subscribers.add(sub)
         for meth_name in self.call_with_conn:
             getattr(self.obj, meth_name)(_send_to=[sub])

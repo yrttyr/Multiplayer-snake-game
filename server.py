@@ -7,6 +7,7 @@ from gevent import sleep, getcurrent
 from ws4py.server.geventserver import WebSocketServer
 
 import sender
+import player
 
 def http_server():
     import SimpleHTTPServer
@@ -35,10 +36,10 @@ def websocket_app(ws, t):
         if data:
             ws.subscriber.recv(data)
         else:
+            ws.subscriber.kill()
+            ws.subscriber = None
             break
     print 'ws del'
-
-import player
 
 class Subscriber(sender.Subscriber):
     def call(self):

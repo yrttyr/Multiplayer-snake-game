@@ -19,16 +19,23 @@ class GamesList(list):
         self.change = []
         self.greenlet = spawn(self.step)
 
-    def add_map(self):
+    @sender.recv_meth()
+    def create_map(self, sub):
         map_ = MapEditor(self)
         self.append(map_)
-        return map_
+        sub.subscribe(map_)
 
-    def add_game(self, key):
+    @sender.recv_meth()
+    def create_game(self, sub, key):
         game = Game(self, key)
         self.append(game)
         self.change.append(game)
-        return game
+        self.connect_game(sub, game)
+
+    @sender.recv_meth()
+    def connect_game(self, sub, game):
+        sub.subscribe(game)
+        sub.get_sendobj('Player').clear()
 
     @sender.send_meth('gamelist')
     def send_all_games(self):
