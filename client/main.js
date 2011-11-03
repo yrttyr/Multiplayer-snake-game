@@ -19,7 +19,6 @@ function init(images) {
     window.gamelistdiv = document.getElementById("games");
 
     window.images = images;
-    //images.wall['0'].getImageData(0, 0, 10, 10);
     window.game = new Game();
 
     window.CELLSIZE = 20;

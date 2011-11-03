@@ -8,7 +8,7 @@ from hashlib import md5
 from gevent import sleep, spawn
 from sender import sender
 
-from gamemap import GameMap, GameMapContainer
+from gamemap import GameMapContainer
 import game_objects
 
 @sender.send_cls(singleton=True)
@@ -78,7 +78,7 @@ class AbstractGame(object):
 
         self.gamemap = GameMapContainer(data['SizeX'], data['SizeY'])
         for layer_name in data['layers'].keys():
-            self.gamemap[layer_name] = GameMap()
+            self.gamemap.add_layer(layer_name)
 
         for name, coord in data['objects']:
             self.add_object(name, coord)
@@ -122,8 +122,7 @@ class Game(AbstractGame):
         super(Game, self).__init__(cont)
 
         self.load_map(maps_list[map_key])
-        rabbit = game_objects.Rabbit(self.gamemap, ())
-        self.objects.append(rabbit)
+        self.add_object('Rabbit')
         self.greenlet = spawn(self.step)
 
     def add_player(self, coord, direct):

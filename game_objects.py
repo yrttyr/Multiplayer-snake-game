@@ -73,7 +73,7 @@ class Rabbit(GameObject):
     def step(self):
         while True:
             while True:
-                coord = randint(0, self.gamemap[self.map_layer].x), randint(0, self.gamemap[self.map_layer].y)
+                coord = randint(0, self.gamemap.x), randint(0, self.gamemap.y)
                 if isinstance(self.gamemap[self.map_layer][coord].obj, EmptyObject):
                     break
             self.pieces.append(MapObject(coord, self, ''))
@@ -100,8 +100,8 @@ class Snake(GameObject):
     direct = (0, -1), (1, 0), (0, 1), (-1, 0)
     color = (255, 0, 0), (0, 255, 0), (0, 0, 255);
     getColor = iter(color).next
-    def __init__(self, gamemap, coord, rotation):
-        self.rotation = rotation
+    def __init__(self, gamemap, coord, color_id):
+        self.rotation = 0
         self.map_layer = 'base'
         super(Snake, self).__init__(gamemap, coord, 'snake')
         self.len = 3
@@ -124,7 +124,6 @@ class Snake(GameObject):
             coord = self.pieces[-1].coord + self.direct[self.rotation]
             if self.test_coll(coord):
                 self.add_new(coord)
-
             sleep(self.speed)
 
     def kill(self):

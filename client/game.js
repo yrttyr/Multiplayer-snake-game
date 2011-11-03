@@ -10,13 +10,9 @@ var needDraw_fill = function(X, Y) {
 };
 
 function Gamemap(default_obj_id) {
-    return { //Проверка на отсутствие повторов в needDraw
+    return {
         'dict': {},
         'default_obj_id': default_obj_id,
-
-        'getDefault': function() {
-            return{'indef':  this.default_obj_id, 'type': ''};
-        },
         'set': function(k, x, type) {
             this.dict[k] = {'indef': x, 'type': type || ''};
             game.needDraw.push(k);
@@ -31,13 +27,13 @@ function Gamemap(default_obj_id) {
             }
         },
         'get': function(k) {
-            return this.dict[k];
+            return this.dict[k] || {'indef':  this.default_obj_id, 'type': ''};
         },
         'getType': function(k) {
             if(k in this.dict) {
                 return this.dict[k].type;
             }
-            return '';//undefined;
+            return '';
         },
         'getListIdAndCoord': function() {
             var data = [];
@@ -164,8 +160,8 @@ function Game(layer_info) {
     this.drawAll = function() {
         for(var key in game.needDraw) {
             var coord = game.needDraw[key];
-            var ground = this.gamemap['ground'].get(coord) || this.gamemap['ground'].getDefault();
-            var base = this.gamemap['base'].get(coord) || this.gamemap['base'].getDefault();
+            var ground = this.gamemap['ground'].get(coord);
+            var base = this.gamemap['base'].get(coord);
 
             var ground_obj = this.objects[ground.indef];
             ground_obj.draw(coord[0], coord[1], ground.type);

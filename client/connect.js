@@ -47,6 +47,7 @@ function switch_parse(data) {
         data[1].forEach(function(value) {
             game.updateDrawdata(value);
         })
+
     }
     else if(data[0] == 'coord') {
         data[1].forEach(function(value) {

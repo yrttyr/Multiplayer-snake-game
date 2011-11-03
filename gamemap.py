@@ -19,21 +19,13 @@ class Coord(_Coord):
     def __add__(self, o):
         return self.x + o[0], self.y + o[1]
 
-    #def __hash__(self):
-    #   return hash((self.x, self.y))
-
-    #def __eq__(self, other):
-    #   return (self.x, self.y) == (other.x, other.y)
-
 class GameMapContainer(dict):
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
-    def __setitem__(self, key, value):
-        super(GameMapContainer, self).__setitem__(key, value)
-        value.x = self.x
-        value.y = self.y
+    def add_layer(self, name):
+        self[name] = GameMap(self)
 
     def changed(self):
         return any(gamemap.change for gamemap in self.values())
@@ -52,40 +44,39 @@ class GameMapContainer(dict):
         return data
 
 class GameMap(WeakValueDictionary):
-    #slots
-    def __init__(self):
+    def __init__(self, container):
         WeakValueDictionary.__init__(self)
+        self.container = container
         self.change = []
 
     def set_default(self, default_object):
         self.default_object = MapObject(None, default_object)
 
-    #def __setitem__(self, key, value):
-    #   WeakValueDictionary.__setitem__(self, key, value)
+    def __setitem__(self, key, value):
+        key = Coord(key[0] % self.container.x,
+                    key[1] % self.container.y)
+        WeakValueDictionary.__setitem__(self, key, value)
+        return key
 
     def __getitem__(self, key):
-        #if not isinstance(key, str):
-        key = key[0] % self.x, key[1] % self.y
+        key = key[0] % self.container.x, \
+              key[1] % self.container.y
         return self.get(key, self.default_object)
 
     def get_change_coord(self):
         data = [[self.get(coord, self.default_object).obj.indef,
                 coord, self.get(coord, self.default_object).info]
                 for coord in set(self.change)]
-        #del self.change[:]
         return data
 
 class MapObject(object):
-    #slots
     def __init__(self, coord, obj, info_val = ''):
         self.obj = obj
         self._info = info_val
 
         if coord:
-            self.coord = Coord(coord[0] % self.layer.x,
-                                coord[1] % self.layer.y)
+            self.coord = self.layer.__setitem__(coord, self)
             self.layer.change.append(self.coord)
-            self.layer[self.coord] = self
 
     @property
     def layer(self):
