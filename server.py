@@ -4,12 +4,8 @@
 from multiprocessing import Process
 
 from gevent import sleep, getcurrent
-#from gevent.http import HTTPServer
 from ws4py.server.geventserver import WebSocketServer
-#from geventwebsocket.handler import WebSocketHandler
-#import json
 
-#import player
 import sender
 
 def http_server():
@@ -34,17 +30,13 @@ def start():
 
 def websocket_app(ws, t):
     ws.subscriber = Subscriber(ws)
-    #try:
     while True:
         data = ws.receive()
         if data:
             ws.subscriber.recv(data)
         else:
-            print('ws.websocket_closed')
             break
-   # except IOError:
     print 'ws del'
-    #ws.player.kill()
 
 import player
 
@@ -52,5 +44,4 @@ class Subscriber(sender.Subscriber):
     def call(self):
         self.subscribe('GamesList')
         self.subscribe('MapsList')
-        #self.player = player.Player()
         self.subscribe(player.Player())

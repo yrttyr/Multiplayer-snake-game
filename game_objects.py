@@ -100,8 +100,8 @@ class Snake(GameObject):
     direct = (0, -1), (1, 0), (0, 1), (-1, 0)
     color = (255, 0, 0), (0, 255, 0), (0, 0, 255);
     getColor = iter(color).next
-    def __init__(self, gamemap, coord, color_id):
-        self.rotation = 0
+    def __init__(self, gamemap, coord, rotation):
+        self.rotation = rotation
         self.map_layer = 'base'
         super(Snake, self).__init__(gamemap, coord, 'snake')
         self.len = 3

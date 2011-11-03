@@ -29,7 +29,6 @@ function init(images) {
 }
 
 function update() {
-    //game.addObjectInMap();
     game.drawAll();
     requestAnimationFrame(update, game.canvas);
 }

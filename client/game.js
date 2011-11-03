@@ -59,7 +59,6 @@ function Gamemap(default_obj_id) {
 function GameList() {
     return {
         'div': document.getElementById('games'),
-        //'games': [],
         'add': function(indef, sizeX, sizeY) {
             var el = document.getElementById(indef);
             if(!el) {
@@ -131,7 +130,6 @@ function Game(layer_info) {
     this.mapEditorAddButton = function(obj, indef) {
         var src = obj.getSRC();
         var el = document.createElement('div');
-        //el.setAttribute('id', indef);
         if(obj.gamemap == 'base') {
             this.base_div.appendChild(el);
         }
