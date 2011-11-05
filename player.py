@@ -48,7 +48,9 @@ class Player(object):
             self.snake.start(self.start_coord)
         elif self.game and self.start_coord:
             self.game = sub.get_sendobj('Game')
-            self.snake = self.game.add_snake(self.start_coord, direct)
+            snake = self.game.add_snake(self.start_coord, direct)
+            if snake:
+                self.snake = snake
 
     def kill(self):
         self.connect.player = None
