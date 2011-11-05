@@ -27,7 +27,11 @@ p.start()
 
 def start():
     server = WebSocketServer(('127.0.0.1', 8080), websocket_app)
-    server.serve_forever()
+    try:
+        server.serve_forever()
+    except:
+        server.kill()
+        raise
 
 def websocket_app(ws, t):
     ws.subscriber = Subscriber(ws)
