@@ -8,12 +8,9 @@ from weakref import ref
 class Player(object):
     tmp = 87, 68, 83, 65
 
-    def __init__(self):
-        self.clear()
-
-    def clear(self):
+    def clear(self, game):
         self._snake = None
-        #self.game = None
+        self.game = game
         self.start_coord = ()
 
     @property
@@ -32,8 +29,7 @@ class Player(object):
 
     @sender.recv_meth()
     def set_start_coord(self, sub, x, y):
-        game = sub.get_sendobj('Game')
-        select_mapobj = game.gamemap['ground'][(x, y)].obj
+        select_mapobj = self.game.gamemap['ground'][(x, y)].obj
         if getattr(select_mapobj, 'start_pos', False):
             self.start_coord = x, y
 
@@ -43,13 +39,16 @@ class Player(object):
         try:
             direct = self.tmp.index(keycode)
         except ValueError:
-            direct = 0
+            return
 
-        if self.snake:
+        if self.snake and self.snake.alive:
             self.snake.rotation = direct
-        elif 'Game' in sub.send_obj and self.start_coord:
-            game = sub.get_sendobj('Game')
-            self.snake = game.add_player(self.start_coord, direct)
+        elif self.snake and not self.snake.alive:
+            self.snake.rotation = direct
+            self.snake.start(self.start_coord)
+        elif self.game and self.start_coord:
+            self.game = sub.get_sendobj('Game')
+            self.snake = self.game.add_player(self.start_coord, direct)
 
     def kill(self):
         self.connect.player = None
@@ -60,3 +59,5 @@ class Player(object):
 
     def __del__(self):
         print('player del')
+        if self.snake:
+            self.game.objects.remove(self.snake)

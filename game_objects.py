@@ -103,32 +103,26 @@ class Snake(GameObject):
     def __init__(self, gamemap, coord, rotation):
         self.rotation = rotation
         self.map_layer = 'base'
-        super(Snake, self).__init__(gamemap, coord, 'snake')
-        self.len = 3
+        super(Snake, self).__init__(gamemap, (), 'snake')
         self.speed = 0.4
         self.drawdata['color'] = self.getColor()
-        self.greenlet = spawn(self.step)
+        self.start(coord[0])
 
-    def create_object(self, coord):
+    def start(self, coord):
+        self.alive = True
+        self.len = 3
         info = str(self.rotation) + 'h'
-        self.pieces.append(MapObject(coord[0], self, info))
-
-    def step(self):
-        while True:
-            if self.len < 2:
-                self.kill()
-
-            if self.len < len(self.pieces):
-                self.del_last()
-
-            coord = self.pieces[-1].coord + self.direct[self.rotation]
-            if self.test_coll(coord):
-                self.add_new(coord)
-            sleep(self.speed)
+        self.pieces.append(MapObject(coord, self, info))
+        self.greenlet = spawn(self.step)
 
     def kill(self):
         print 'snake dead'
+        self.alive = False
+        del self.pieces[:]
         self.greenlet.kill()
+
+    def __del__(self):
+        print 'snake del'
 
     def del_last(self):
         self.pieces.pop(0)
@@ -150,3 +144,16 @@ class Snake(GameObject):
     def coll(self, coll_obj, map_object):
         coll_obj.len -= 1
         return False
+
+    def step(self):
+        while True:
+            if self.len < 2:
+                self.kill()
+
+            if self.len < len(self.pieces):
+                self.del_last()
+
+            coord = self.pieces[-1].coord + self.direct[self.rotation]
+            if self.test_coll(coord):
+                self.add_new(coord)
+            sleep(self.speed)

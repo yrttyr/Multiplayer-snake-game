@@ -35,7 +35,7 @@ class GamesList(list):
     @sender.recv_meth()
     def connect_game(self, sub, game):
         sub.subscribe(game)
-        sub.get_sendobj('Player').clear()
+        sub.get_sendobj('Player').clear(game)
 
     @sender.send_meth('gamelist')
     def send_all_games(self):
