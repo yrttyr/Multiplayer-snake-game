@@ -36,7 +36,6 @@ def websocket_app(ws, t):
         if data:
             ws.subscriber.recv(data)
         else:
-            ws.subscriber.kill()
             ws.subscriber = None
             break
     print 'ws del'
