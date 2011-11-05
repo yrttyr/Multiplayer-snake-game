@@ -98,15 +98,14 @@ class StartPosition(GameObject):
 
 class Snake(GameObject):
     direct = (0, -1), (1, 0), (0, 1), (-1, 0)
-    color = (255, 0, 0), (0, 255, 0), (0, 0, 255);
-    getColor = iter(color).next
-    def __init__(self, gamemap, coord, rotation):
+
+    def __init__(self, gamemap, coord, rotation, color):
         self.rotation = rotation
         self.map_layer = 'base'
         super(Snake, self).__init__(gamemap, (), 'snake')
         self.speed = 0.4
-        self.drawdata['color'] = self.getColor()
-        self.start(coord[0])
+        self.drawdata['color'] = color
+        self.start(coord)
 
     def start(self, coord):
         self.alive = True

@@ -4,6 +4,7 @@
 import json
 import os
 from hashlib import md5
+from weakref import WeakSet
 
 from gevent import sleep, spawn
 from sender import sender
@@ -31,10 +32,13 @@ class GamesList(list):
         self.append(game)
         self.change.append(game)
         self.connect_game(sub, game)
+        sub.subscribe(game)
+        sub.get_sendobj('Player').clear(game)
 
     @sender.recv_meth()
-    def connect_game(self, sub, game):
-        sub.subscribe(game)
+    def connect_game(self, sub, game_id):
+        sub.subscribe(game_id)
+        game = sub.get_sendobj('Game')
         sub.get_sendobj('Player').clear(game)
 
     @sender.send_meth('gamelist')
@@ -76,7 +80,7 @@ class AbstractGame(object):
     def __init__(self, cont):
         self.cont = cont
         self.objects = []
-        self.new_objects = []
+        self.new_objects = WeakSet()
         self.map_edit = False
 
     def load_map(self, name):
@@ -97,7 +101,7 @@ class AbstractGame(object):
         obj_class = getattr(game_objects, name)
         obj = obj_class(self.gamemap, coord, *arg, **kwarg)
         self.objects.append(obj)
-        self.new_objects.append(obj)
+        self.new_objects.add(obj)
         return obj
 
     @sender.send_meth('gameinfo')
@@ -128,19 +132,33 @@ class Game(AbstractGame):
     def __init__(self, cont, map_key):
         super(Game, self).__init__(cont)
 
+        self.max_snake = 3
+        self.snake_count = 0
         self.load_map(maps_list[map_key])
+        self.snake_color = [(255, 0, 0), (0, 255, 0), (0, 0, 255),
+                            (255, 255, 0), (255, 0, 255), (0, 255, 255)]
         self.add_object('Rabbit')
         self.greenlet = spawn(self.step)
 
-    def add_player(self, coord, direct):
-        return self.add_object('Snake', (coord,), direct)
+    def add_snake(self, coord, direct):
+        if self.snake_count >= self.max_snake:
+            return None
+        self.snake_count += 1
+        return self.add_object('Snake', coord, direct,
+                               self.snake_color.pop())
+
+    def remove_snake(self, snake):
+        self.snake_count -= 1
+        self.snake_color.append(snake.drawdata['color'])
+        snake.kill()
+        self.objects.remove(snake)
 
     def step(self):
         while True:
             if self.gamemap.changed():
                 self.send_new_drawdata()
                 self.send_change_coord()
-                del self.new_objects[:]
+                self.new_objects.clear()
             sleep(0.04)
 
 @sender.send_cls('Game')

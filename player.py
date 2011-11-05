@@ -48,16 +48,13 @@ class Player(object):
             self.snake.start(self.start_coord)
         elif self.game and self.start_coord:
             self.game = sub.get_sendobj('Game')
-            self.snake = self.game.add_player(self.start_coord, direct)
+            self.snake = self.game.add_snake(self.start_coord, direct)
 
     def kill(self):
         self.connect.player = None
         self.connect = None
 
-    def send_start(self):
-        pass
-
     def __del__(self):
         print('player del')
         if self.snake:
-            self.game.objects.remove(self.snake)
+            self.game.remove_snake(self.snake)
