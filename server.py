@@ -12,13 +12,17 @@ import player
 def http_server():
     import SimpleHTTPServer
     import SocketServer
+    import socket
 
     class MyHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         def do_GET(self):
             self.path = '/client' + self.path
             SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
 
-    httpd = SocketServer.TCPServer(('127.0.0.1', 9923), MyHandler)
+    class TCPServer(SocketServer.TCPServer):
+        allow_reuse_address = True
+
+    httpd = TCPServer(('127.0.0.1', 9923), MyHandler)
     httpd.serve_forever()
 
 p = Process(target=http_server)
@@ -27,11 +31,7 @@ p.start()
 
 def start():
     server = WebSocketServer(('127.0.0.1', 8080), websocket_app)
-    try:
-        server.serve_forever()
-    except:
-        server.kill()
-        raise
+    server.serve_forever()
 
 def websocket_app(ws, t):
     ws.subscriber = Subscriber(ws)

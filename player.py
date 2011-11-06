@@ -9,23 +9,9 @@ class Player(object):
     tmp = 87, 68, 83, 65
 
     def clear(self, game):
-        self._snake = None
+        self.snake = None
         self.game = game
         self.start_coord = ()
-
-    @property
-    def snake(self):
-        if self._snake:
-            return self._snake()
-        return None
-
-    @snake.setter
-    def snake(self, obj):
-        self._snake = ref(obj)
-
-    @snake.deleter
-    def snake(self):
-        self._snake = None
 
     @sender.recv_meth()
     def set_start_coord(self, sub, x, y):
