@@ -5,105 +5,104 @@ from weakref import WeakValueDictionary, WeakSet, ref
 from collections import namedtuple, defaultdict
 import json
 
-class _Sender(WeakValueDictionary):
-    def send_cls(self, group_name=None, singleton=False):
-        def inner(_cls):
-            if group_name is None:
-                group_name_local = _cls.__name__
-            else:
-                group_name_local = group_name
+wrapers = WeakValueDictionary()
 
-            send_meth, recv_meth = self.get_methods(_cls)
-            for meth in send_meth:
-                self.replace_sendfun(meth)
-            for meth in recv_meth:
-                self.replace_recvfun(meth)
-
-            recvmeth_names = [meth.name for meth in recv_meth]
-            call_with_conn = getattr(_cls, 'call_with_conn', ())
-
-            self.replace_init(_cls, group_name_local, recvmeth_names,
-                              call_with_conn, singleton)
-            self.replace_del(_cls)
-            return _cls
-        return inner
-
-    def get_methods(self, cls):
-        send = []
-        recv = []
-        for atr_name in cls.__dict__.keys():
-            atr = getattr(cls, atr_name)
-            if hasattr(atr, '_sendmeth') and atr._sendmeth:
-                send.append(atr)
-            elif hasattr(atr, '_recvmeth') and atr._recvmeth:
-                recv.append(atr)
-        return send, recv
-
-    def replace_init(_sender, _cls, group_name, recvmeth_names,
-                     call_with_conn, singleton):
-        _old_init = _cls.__init__
-        def _initfun(self, *args, **kwargs):
-            if id(self) not in _sender: # Защита при вызове __init__ родителя
-                _send_obj = SendObj(self, group_name,
-                                    recvmeth_names, call_with_conn)
-                _sender[id(self)] = _send_obj
-                if singleton:
-                    _sender[_cls.__name__] = _send_obj
-            _old_init(self, *args, **kwargs)
-        _cls.__init__ = _initfun
-
-    def replace_del(_sender, _cls):
-        _old_del = getattr(_cls, '__del__', None)
-        if _old_del:
-            def _delfun(self, *args, **kwargs):
-                if id(self) in _sender:
-                    _sender[id(self)].kill()
-                _old_del(self, *args, **kwargs)
+def send_cls(group_name=None, singleton=False):
+    def inner(_cls):
+        if group_name is None:
+            group_name_local = _cls.__name__
         else:
-            def _delfun(self, *args, **kwargs):
-                if id(self) in _sender:
-                    _sender[id(self)].kill()
-        _cls.__del__ = _delfun
+            group_name_local = group_name
 
-    def replace_sendfun(_sender, _fun):
-        def _sendfun(self, *args, **kwargs):
-            if '_send_to' in kwargs:
-                _send_to = kwargs['_send_to']
-                del kwargs['_send_to']
-            else:
-                _send_to = []
-            data = _fun(self, *args, **kwargs)
-            if not data:
-                return
-            _sender[id(self)].send((_fun.name, data), _send_to)
-        setattr(_fun.im_class, _fun.__name__, _sendfun)
+        send_meth, recv_meth = _get_methods(_cls)
+        for meth in send_meth:
+            _replace_sendfun(meth)
+        for meth in recv_meth:
+            _replace_recvfun(meth)
 
-    def replace_recvfun(_sender, _fun):
-        def _recvfun(self, *args, **kwargs):
-            return _fun(self, *args, **kwargs)  # Нужно ловля экцептов на неправильные аргументы
-        setattr(_fun.im_class, _fun.__name__, _recvfun)
+        recvmeth_names = [meth.name for meth in recv_meth]
+        call_with_conn = getattr(_cls, 'call_with_conn', ())
 
-    def send_meth(self, name):
-        def inner(_meth):
-            _meth._sendmeth = True
+        _replace_init(_cls, group_name_local, recvmeth_names,
+                     call_with_conn, singleton)
+        _replace_del(_cls)
+        return _cls
+    return inner
+
+def _get_methods(cls):
+    send = []
+    recv = []
+    for atr_name in cls.__dict__.keys():
+        atr = getattr(cls, atr_name)
+        if hasattr(atr, '_sendmeth') and atr._sendmeth:
+            send.append(atr)
+        elif hasattr(atr, '_recvmeth') and atr._recvmeth:
+            recv.append(atr)
+    return send, recv
+
+def _replace_init(_cls, group_name, recvmeth_names,
+                 call_with_conn, singleton):
+    _old_init = _cls.__init__
+    def _initfun(self, *args, **kwargs):
+        if id(self) not in wrapers: # Защита при вызове __init__ родителя
+            _send_obj = SendObj(self, group_name,
+                                recvmeth_names, call_with_conn)
+            wrapers[id(self)] = _send_obj
+            if singleton:
+                wrapers[_cls.__name__] = _send_obj
+        _old_init(self, *args, **kwargs)
+    _cls.__init__ = _initfun
+
+def _replace_del(_cls):
+    _old_del = getattr(_cls, '__del__', None)
+    if _old_del:
+        def _delfun(self, *args, **kwargs):
+            if id(self) in wrapers:
+                wrapers[id(self)].kill()
+            _old_del(self, *args, **kwargs)
+    else:
+        def _delfun(self, *args, **kwargs):
+            if id(self) in wrapers:
+                wrapers[id(self)].kill()
+    _cls.__del__ = _delfun
+
+def _replace_sendfun(_fun):
+    def _sendfun(self, *args, **kwargs):
+        if '_send_to' in kwargs:
+            _send_to = kwargs['_send_to']
+            del kwargs['_send_to']
+        else:
+            _send_to = []
+        data = _fun(self, *args, **kwargs)
+        if not data:
+            return
+        wrapers[id(self)].send((_fun.name, data), _send_to)
+    setattr(_fun.im_class, _fun.__name__, _sendfun)
+
+def _replace_recvfun(_fun):
+    def _recvfun(self, *args, **kwargs):
+        return _fun(self, *args, **kwargs)  # Нужно ловля экцептов на неправильные аргументы
+    setattr(_fun.im_class, _fun.__name__, _recvfun)
+
+def send_meth(name):
+    def inner(_meth):
+        _meth._sendmeth = True
+        _meth.name = name
+        return _meth
+    return inner
+
+def recv_meth(name=False):
+    def inner(_meth):
+        _meth._recvmeth = True
+        if name:
             _meth.name = name
-            return _meth
-        return inner
-
-    def recv_meth(self, name=False):
-        def inner(_meth):
-            _meth._recvmeth = True
-            if name:
-                _meth.name = name
-            else:
-                _meth.name = _meth.__name__
-            return _meth
-        return inner
-
-sender = _Sender()
+        else:
+            _meth.name = _meth.__name__
+        return _meth
+    return inner
 
 class SendObj(object):
-    list_ = []
+    _keeper = set()
     def __init__(self, obj, group_name, recvmeth_names, call_with_conn):
         self._obj = ref(obj)
         self.keep_obj = None
@@ -111,14 +110,14 @@ class SendObj(object):
         self.recvmeth_names = recvmeth_names
         self.call_with_conn = call_with_conn
         self.subscribers = WeakSet()
-        self.list_.append(self)
+        self._keeper.add(self)
 
     @property
     def obj(self):
         return self._obj()
 
     def kill(self):
-        self.list_.remove(self)
+        self._keeper.remove(self)
 
     def subscribe(self, sub):
         self.subscribers.add(sub)
@@ -171,11 +170,11 @@ class Subscriber(object):
 
     def _get_send_obj(self, data):
         if isinstance(data, basestring):
-            return sender[data]
+            return wrapers[data]
         elif isinstance(data, int):
-            return sender[data]
-        elif id(data) in sender:
-            return sender[id(data)]
+            return wrapers[data]
+        elif id(data) in wrapers:
+            return wrapers[id(data)]
         return data
 
     def send(self, data):

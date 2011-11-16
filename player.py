@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from sender import sender
+import sender
 from weakref import ref
 
 @sender.send_cls()

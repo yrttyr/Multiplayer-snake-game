@@ -7,7 +7,7 @@ from hashlib import md5
 from weakref import WeakSet
 
 from gevent import sleep, spawn
-from sender import sender
+import sender
 
 from gamemap import GameMapContainer
 import game_objects

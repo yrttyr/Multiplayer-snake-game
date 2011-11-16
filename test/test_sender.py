@@ -14,9 +14,8 @@ class TestDelete(unittest.TestCase):
 
     def setUp(self):
         reload(sender)
-        self.sender = sender.sender
 
-        @self.sender.send_cls('Test', singleton=True)
+        @sender.send_cls('Test', singleton=True)
         class C(object):
             pass
         self.C = C
@@ -25,7 +24,7 @@ class TestDelete(unittest.TestCase):
         self.weak_c = weakref.ref(self.c)
 
         self.subscriber = sender.Subscriber(None)
-        self.subscriber.subscribe(self.sender['C'])
+        self.subscriber.subscribe(sender.wrapers['C'])
         self.weak_send_obj = weakref.ref(self.subscriber.send_obj['Test'])
 
     def test_del_obj(self):
@@ -69,25 +68,24 @@ class TestSend(unittest.TestCase):
 
     def setUp(self):
         reload(sender)
-        self.sender = sender.sender
 
-        @self.sender.send_cls('Test', singleton=True)
+        @sender.send_cls('Test', singleton=True)
         class C(object):
             call_with_conn = 'data_1', 'data_4'
 
-            @self.sender.send_meth('test_send_1')
+            @sender.send_meth('test_send_1')
             def data_1(self):
                 return 'info_1'
 
-            @self.sender.send_meth('test_send_2')
+            @sender.send_meth('test_send_2')
             def data_2(self):
                 return 'info_2'
 
-            @self.sender.send_meth('test_send_3')
+            @sender.send_meth('test_send_3')
             def data_3(self):
                 return 'info_3'
 
-            @self.sender.send_meth('test_send_4')
+            @sender.send_meth('test_send_4')
             def data_4(self):
                 return 'info_4'
         self.C = C
@@ -97,11 +95,11 @@ class TestSend(unittest.TestCase):
 
         connect_1 = self.Connect()
         subscriber_1 = sender.Subscriber(connect_1)
-        subscriber_1.subscribe(self.sender['C'])
+        subscriber_1.subscribe(sender.wrapers['C'])
 
         connect_2 = self.Connect()
         subscriber_2 = sender.Subscriber(connect_2)
-        subscriber_2.subscribe(self.sender['C'])
+        subscriber_2.subscribe(sender.wrapers['C'])
 
         self.assertEqual(connect_1.data, [
                          '["test_send_1","info_1"]',
@@ -115,12 +113,12 @@ class TestSend(unittest.TestCase):
 
         connect_1 = self.Connect()
         subscriber_1 = sender.Subscriber(connect_1)
-        subscriber_1.subscribe(self.sender['C'])
+        subscriber_1.subscribe(sender.wrapers['C'])
         c.data_2()
 
         connect_2 = self.Connect()
         subscriber_2 = sender.Subscriber(connect_2)
-        subscriber_2.subscribe(self.sender['C'])
+        subscriber_2.subscribe(sender.wrapers['C'])
         c.data_3()
 
         self.assertEqual(connect_1.data, [
@@ -137,13 +135,12 @@ class TestSend(unittest.TestCase):
 class TestCreateWrapper(unittest.TestCase):
     def setUp(self):
         reload(sender)
-        self.sender = sender.sender
 
     def test_noinit(self):
         class C(object):
             pass
 
-        CW = self.sender.send_cls('Test')(C)
+        CW = sender.send_cls('Test')(C)
         c = CW()
 
     def test_inheritance(self):
@@ -156,11 +153,11 @@ class TestCreateWrapper(unittest.TestCase):
         SendObj = call_count(sender.SendObj)
         sender.SendObj = SendObj
 
-        @self.sender.send_cls('Parent')
+        @sender.send_cls('Parent')
         class P(object):
             pass
 
-        @self.sender.send_cls('Child')
+        @sender.send_cls('Child')
         class C(P):
             pass
 
