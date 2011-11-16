@@ -25,17 +25,17 @@ class TestDelete(unittest.TestCase):
 
         self.subscriber = sender.Subscriber(None)
         self.subscriber.subscribe(self.c)
-        self.weak_send_obj = weakref.ref(self.subscriber.send_obj['Test'])
+        self.weak_send_obj = weakref.ref(self.subscriber.wrappers['Test'])
 
     def test_del_obj(self):
         del self.c
         self.assertIsInstance(self.weak_c(), self.C)
-        self.assertIsInstance(self.weak_send_obj(), sender.SendObj)
+        self.assertIsInstance(self.weak_send_obj(), sender.Wrapper)
 
     def test_unsub(self):
         self.subscriber.unsubscribe('Test')
         self.assertIsInstance(self.weak_c(), self.C)
-        self.assertIsInstance(self.weak_send_obj(), sender.SendObj)
+        self.assertIsInstance(self.weak_send_obj(), sender.Wrapper)
 
     def test_unsub_and_del_obj(self):
         self.subscriber.unsubscribe('Test')
@@ -54,7 +54,7 @@ class TestDelete(unittest.TestCase):
         link = self.weak_c()
         self.subscriber.unsubscribe('Test')
         self.assertIsInstance(self.weak_c(), self.C)
-        self.assertIsInstance(self.weak_send_obj(), sender.SendObj)
+        self.assertIsInstance(self.weak_send_obj(), sender.Wrapper)
 
 
 class TestSend(unittest.TestCase):
@@ -150,8 +150,8 @@ class TestCreateWrapper(unittest.TestCase):
                 count[0] += 1
                 return obj(*args, **kwargs)
             return inner
-        SendObj = call_count(sender.SendObj)
-        sender.SendObj = SendObj
+        Wrapper = call_count(sender.Wrapper)
+        sender.Wrapper = Wrapper
 
         @sender.send_cls('Parent')
         class P(object):
@@ -181,21 +181,21 @@ class TestSubscribeUnsubscribe(unittest.TestCase):
 
     def test_by_object(self):
         self.subscriber.subscribe(self.c)
-        self.assertEqual(self.subscriber.get_sendobj('Test'), self.c)
+        self.assertEqual(self.subscriber.get_obj('Test'), self.c)
         self.subscriber.unsubscribe(self.c)
-        self.assertRaises(KeyError, self.subscriber.get_sendobj, 'Test')
+        self.assertRaises(KeyError, self.subscriber.get_obj, 'Test')
 
     def test_by_wrapper(self):
         self.subscriber.subscribe(self.weak_wrapper())
-        self.assertEqual(self.subscriber.get_sendobj('Test'), self.c)
+        self.assertEqual(self.subscriber.get_obj('Test'), self.c)
         self.subscriber.unsubscribe(self.weak_wrapper())
-        self.assertRaises(KeyError, self.subscriber.get_sendobj, 'Test')
+        self.assertRaises(KeyError, self.subscriber.get_obj, 'Test')
 
     def test_by_object_id(self):
         self.subscriber.subscribe(id(self.c))
-        self.assertEqual(self.subscriber.get_sendobj('Test'), self.c)
+        self.assertEqual(self.subscriber.get_obj('Test'), self.c)
         self.subscriber.unsubscribe(id(self.c))
-        self.assertRaises(KeyError, self.subscriber.get_sendobj, 'Test')
+        self.assertRaises(KeyError, self.subscriber.get_obj, 'Test')
 
 if __name__ == '__main__':
     unittest.main()

@@ -33,7 +33,7 @@ class Player(object):
             self.snake.rotation = direct
             self.snake.start(self.start_coord)
         elif self.game and self.start_coord:
-            self.game = sub.get_sendobj('Game')
+            self.game = sub.get_obj('Game')
             snake = self.game.add_snake(self.start_coord, direct)
             if snake:
                 self.snake = snake

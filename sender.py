@@ -45,11 +45,11 @@ def _replace_init(_cls, group_name, recvmeth_names,
     _old_init = _cls.__init__
     def _initfun(self, *args, **kwargs):
         if id(self) not in wrappers: # Защита при вызове __init__ родителя
-            _send_obj = SendObj(self, group_name,
-                                recvmeth_names, call_with_conn)
-            wrappers[id(self)] = _send_obj
+            _wrapper = Wrapper(self, group_name,
+                               recvmeth_names, call_with_conn)
+            wrappers[id(self)] = _wrapper
             if singleton:
-                wrappers[_cls.__name__] = _send_obj
+                wrappers[_cls.__name__] = _wrapper
         _old_init(self, *args, **kwargs)
     _cls.__init__ = _initfun
 
@@ -101,7 +101,7 @@ def recv_meth(name=False):
         return _meth
     return inner
 
-class SendObj(object):
+class Wrapper(object):
     _keeper = set()
     def __init__(self, obj, group_name, recvmeth_names, call_with_conn):
         self._obj = ref(obj)
@@ -149,31 +149,31 @@ class SendObj(object):
 class Subscriber(object):
     def __init__(self, connect):
         self.connect = connect
-        self.send_obj = dict()
+        self.wrappers = dict()
         self.call()
 
-    def get_sendobj(self, name):
-        return self.send_obj[name].obj
+    def get_obj(self, name):
+        return self.wrappers[name].obj
 
-    def subscribe(self, send_obj):
-        send_obj = self._get_send_obj(send_obj)
-        group_name = send_obj.group_name
-        if group_name in self.send_obj:
+    def subscribe(self, data):
+        wrapper = self._get_wrapper(data)
+        group_name = wrapper.group_name
+        if group_name in self.wrappers:
             self.unsubscribe(group_name)
 
-        send_obj.subscribe(self)
-        self.send_obj[group_name] = send_obj
+        wrapper.subscribe(self)
+        self.wrappers[group_name] = wrapper
 
-    def unsubscribe(self, send_obj):
-        send_obj = self._get_send_obj(send_obj, True)
-        group_name = send_obj.group_name
-        self.send_obj[group_name].unsubscribe(self)
-        del self.send_obj[group_name]
+    def unsubscribe(self, data):
+        wrapper = self._get_wrapper(data, True)
+        group_name = wrapper.group_name
+        self.wrappers[group_name].unsubscribe(self)
+        del self.wrappers[group_name]
 
-    def _get_send_obj(self, data, unsub=False):
+    def _get_wrapper(self, data, unsub=False):
         if isinstance(data, basestring):
             if unsub:
-                return self.send_obj[data]
+                return self.wrappers[data]
             return wrappers[data]
         elif isinstance(data, int):
             return wrappers[data]
@@ -189,7 +189,7 @@ class Subscriber(object):
             print 'end error'
 
     def __del__(self):
-        for obj in self.send_obj.values():
+        for obj in self.wrappers.values():
             obj.unsubscribe()
 
     def call(self):
@@ -203,9 +203,9 @@ class Subscriber(object):
         data = json.loads(data)
         fun_name, attr = data[0], data[1:]
         print fun_name, attr
-        for send_obj in self.send_obj.values():
-            if fun_name in send_obj.recvmeth_names:
-                getattr(send_obj.obj, fun_name)(self, *attr)
+        for wrapper in self.wrappers.values():
+            if fun_name in wrapper.recvmeth_names:
+                getattr(wrapper.obj, fun_name)(self, *attr)
                 break
         else:
             print fun_name, attr

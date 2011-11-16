@@ -33,13 +33,13 @@ class GamesList(list):
         self.change.append(game)
         self.connect_game(sub, game)
         sub.subscribe(game)
-        sub.get_sendobj('Player').clear(game)
+        sub.get_obj('Player').clear(game)
 
     @sender.recv_meth()
     def connect_game(self, sub, game_id):
         sub.subscribe(game_id)
-        game = sub.get_sendobj('Game')
-        sub.get_sendobj('Player').clear(game)
+        game = sub.get_obj('Game')
+        sub.get_obj('Player').clear(game)
 
     @sender.send_meth('gamelist')
     def send_all_games(self):
