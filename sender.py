@@ -5,7 +5,7 @@ from weakref import WeakValueDictionary, WeakSet, ref
 from collections import namedtuple, defaultdict
 import json
 
-wrapers = WeakValueDictionary()
+wrappers = WeakValueDictionary()
 
 def send_cls(group_name=None, singleton=False):
     def inner(_cls):
@@ -44,12 +44,12 @@ def _replace_init(_cls, group_name, recvmeth_names,
                  call_with_conn, singleton):
     _old_init = _cls.__init__
     def _initfun(self, *args, **kwargs):
-        if id(self) not in wrapers: # Защита при вызове __init__ родителя
+        if id(self) not in wrappers: # Защита при вызове __init__ родителя
             _send_obj = SendObj(self, group_name,
                                 recvmeth_names, call_with_conn)
-            wrapers[id(self)] = _send_obj
+            wrappers[id(self)] = _send_obj
             if singleton:
-                wrapers[_cls.__name__] = _send_obj
+                wrappers[_cls.__name__] = _send_obj
         _old_init(self, *args, **kwargs)
     _cls.__init__ = _initfun
 
@@ -57,13 +57,13 @@ def _replace_del(_cls):
     _old_del = getattr(_cls, '__del__', None)
     if _old_del:
         def _delfun(self, *args, **kwargs):
-            if id(self) in wrapers:
-                wrapers[id(self)].kill()
+            if id(self) in wrappers:
+                wrappers[id(self)].kill()
             _old_del(self, *args, **kwargs)
     else:
         def _delfun(self, *args, **kwargs):
-            if id(self) in wrapers:
-                wrapers[id(self)].kill()
+            if id(self) in wrappers:
+                wrappers[id(self)].kill()
     _cls.__del__ = _delfun
 
 def _replace_sendfun(_fun):
@@ -76,7 +76,7 @@ def _replace_sendfun(_fun):
         data = _fun(self, *args, **kwargs)
         if not data:
             return
-        wrapers[id(self)].send((_fun.name, data), _send_to)
+        wrappers[id(self)].send((_fun.name, data), _send_to)
     setattr(_fun.im_class, _fun.__name__, _sendfun)
 
 def _replace_recvfun(_fun):
@@ -164,17 +164,21 @@ class Subscriber(object):
         send_obj.subscribe(self)
         self.send_obj[group_name] = send_obj
 
-    def unsubscribe(self, key):
-        self.send_obj[key].unsubscribe(self)
-        del self.send_obj[key]
+    def unsubscribe(self, send_obj):
+        send_obj = self._get_send_obj(send_obj, True)
+        group_name = send_obj.group_name
+        self.send_obj[group_name].unsubscribe(self)
+        del self.send_obj[group_name]
 
-    def _get_send_obj(self, data):
+    def _get_send_obj(self, data, unsub=False):
         if isinstance(data, basestring):
-            return wrapers[data]
+            if unsub:
+                return self.send_obj[data]
+            return wrappers[data]
         elif isinstance(data, int):
-            return wrapers[data]
-        elif id(data) in wrapers:
-            return wrapers[id(data)]
+            return wrappers[data]
+        elif id(data) in wrappers:
+            return wrappers[id(data)]
         return data
 
     def send(self, data):
