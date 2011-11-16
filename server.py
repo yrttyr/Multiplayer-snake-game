@@ -42,7 +42,6 @@ def websocket_app(ws, t):
         else:
             ws.subscriber = None
             break
-    print 'ws del'
 
 class Subscriber(sender.Subscriber):
     def call(self):

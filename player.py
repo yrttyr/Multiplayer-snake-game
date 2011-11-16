@@ -38,10 +38,6 @@ class Player(object):
             if snake:
                 self.snake = snake
 
-    def kill(self):
-        self.connect.player = None
-        self.connect = None
-
     def __del__(self):
         print('player del')
         if self.snake:
