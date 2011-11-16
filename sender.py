@@ -5,7 +5,7 @@ from weakref import WeakValueDictionary, WeakSet, ref
 from collections import namedtuple, defaultdict
 import json
 
-class Sender(WeakValueDictionary):
+class _Sender(WeakValueDictionary):
     def send_cls(self, group_name=None, singleton=False):
         def inner(_cls):
             if group_name is None:
@@ -42,29 +42,31 @@ class Sender(WeakValueDictionary):
     def replace_init(_sender, _cls, group_name, recvmeth_names,
                      call_with_conn, singleton):
         _old_init = _cls.__init__
-        def tmp(self, *args, **kwargs):
+        def _initfun(self, *args, **kwargs):
             if id(self) not in _sender: # Защита при вызове __init__ родителя
-                _send_obj = SendObj(self, group_name, recvmeth_names, call_with_conn)
+                _send_obj = SendObj(self, group_name,
+                                    recvmeth_names, call_with_conn)
                 _sender[id(self)] = _send_obj
                 if singleton:
                     _sender[_cls.__name__] = _send_obj
-
             _old_init(self, *args, **kwargs)
-        _cls.__init__ = tmp
+        _cls.__init__ = _initfun
 
     def replace_del(_sender, _cls):
         _old_del = getattr(_cls, '__del__', None)
         if _old_del:
-            def tmp(self, *args, **kwargs):
-                _sender[id(self)].kill()
+            def _delfun(self, *args, **kwargs):
+                if id(self) in _sender:
+                    _sender[id(self)].kill()
                 _old_del(self, *args, **kwargs)
         else:
-            def tmp(self, *args, **kwargs):
-                _sender[id(self)].kill()
-        _cls.__del__ = tmp
+            def _delfun(self, *args, **kwargs):
+                if id(self) in _sender:
+                    _sender[id(self)].kill()
+        _cls.__del__ = _delfun
 
     def replace_sendfun(_sender, _fun):
-        def tmp(self, *args, **kwargs):
+        def _sendfun(self, *args, **kwargs):
             if '_send_to' in kwargs:
                 _send_to = kwargs['_send_to']
                 del kwargs['_send_to']
@@ -74,12 +76,12 @@ class Sender(WeakValueDictionary):
             if not data:
                 return
             _sender[id(self)].send((_fun.name, data), _send_to)
-        setattr(_fun.im_class, _fun.__name__, tmp)
+        setattr(_fun.im_class, _fun.__name__, _sendfun)
 
     def replace_recvfun(_sender, _fun):
-        def tmp(self, *args, **kwargs):
+        def _recvfun(self, *args, **kwargs):
             return _fun(self, *args, **kwargs)  # Нужно ловля экцептов на неправильные аргументы
-        setattr(_fun.im_class, _fun.__name__, tmp)
+        setattr(_fun.im_class, _fun.__name__, _recvfun)
 
     def send_meth(self, name):
         def inner(_meth):
@@ -98,7 +100,7 @@ class Sender(WeakValueDictionary):
             return _meth
         return inner
 
-sender = Sender()
+sender = _Sender()
 
 class SendObj(object):
     list_ = []
@@ -119,7 +121,6 @@ class SendObj(object):
         self.list_.remove(self)
 
     def subscribe(self, sub):
-        print sub
         self.subscribers.add(sub)
         for meth_name in self.call_with_conn:
             getattr(self.obj, meth_name)(_send_to=[sub])
@@ -133,9 +134,6 @@ class SendObj(object):
 
         if not self.subscribers:
             self.keep_obj = None
-
-    def __del__(self):
-        print 'del send_obj'
 
     def send(self, data, sendto):
         if not sendto:
@@ -152,7 +150,7 @@ class SendObj(object):
 class Subscriber(object):
     def __init__(self, connect):
         self.connect = connect
-        self.send_obj = WeakValueDictionary()
+        self.send_obj = dict()
         self.call()
 
     def get_sendobj(self, name):
@@ -162,11 +160,14 @@ class Subscriber(object):
         send_obj = self._get_send_obj(send_obj)
         group_name = send_obj.group_name
         if group_name in self.send_obj:
-            self.send_obj[group_name].unsubscribe(self)
-            print 'unsub call'
+            self.unsubscribe(group_name)
+
         send_obj.subscribe(self)
         self.send_obj[group_name] = send_obj
-        print 'sub', group_name
+
+    def unsubscribe(self, key):
+        self.send_obj[key].unsubscribe(self)
+        del self.send_obj[key]
 
     def _get_send_obj(self, data):
         if isinstance(data, basestring):
@@ -185,7 +186,6 @@ class Subscriber(object):
             print 'end error'
 
     def __del__(self):
-        print 'sub del'
         for obj in self.send_obj.values():
             obj.unsubscribe()
 
