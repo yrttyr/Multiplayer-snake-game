@@ -43,6 +43,10 @@ class GameMapContainer(dict):
              del gamemap.change[:]
         return data
 
+    def clear_changed_data(self):
+        for gamemap in self.values():
+            del gamemap.change[:]
+
 class GameMap(WeakValueDictionary):
     def __init__(self, container):
         WeakValueDictionary.__init__(self)

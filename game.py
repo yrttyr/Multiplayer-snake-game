@@ -31,7 +31,6 @@ class GamesList(list):
         game = Game(self, key)
         self.append(game)
         self.change.append(game)
-        self.connect_game(sub, game)
         sub.subscribe(game)
         sub.get_obj('Player').clear(game)
 
@@ -96,6 +95,9 @@ class AbstractGame(object):
 
         for layer_name, obj_id in data['layers'].items():
             self.gamemap[layer_name].set_default(self.objects[obj_id])
+
+        self.gamemap.clear_changed_data()
+        self.new_objects.clear()
 
     def add_object(self, name, coord=(), *arg, **kwarg):
         obj_class = getattr(game_objects, name)
