@@ -16,10 +16,6 @@ import game_objects
 class GamesList(list):
     call_with_conn = 'send_all_games',
 
-    def __init__(self):
-        self.change = []
-        self.greenlet = spawn(self.step)
-
     @sender.recv_meth()
     def create_map(self, sub):
         map_ = MapEditor(self)
@@ -30,8 +26,8 @@ class GamesList(list):
     def create_game(self, sub, key):
         game = Game(self, key)
         self.append(game)
-        self.change.append(game)
         sub.subscribe(game)
+        self.send_game(game)
         sub.get_obj('Player').clear(game)
 
     @sender.recv_meth()
@@ -46,16 +42,8 @@ class GamesList(list):
                 for game in self]
 
     @sender.send_meth('gamelist')
-    def send_change_games(self):
-        return [(id(game), game.gamemap.x, game.gamemap.y)
-                for game in self.change]
-
-    def step(self):
-        while True:
-            if self.change:
-                self.send_change_games()
-                del self.change[:]
-            sleep(0.04)
+    def send_game(self, game):
+        return [[id(game), game.gamemap.x, game.gamemap.y]]
 
 games_list = GamesList()
 
