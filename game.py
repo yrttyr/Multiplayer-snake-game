@@ -67,7 +67,6 @@ class AbstractGame(object):
     def __init__(self, cont):
         self.cont = cont
         self.objects = []
-        self.new_objects = WeakSet()
         self.map_edit = False
 
     def load_map(self, name):
@@ -85,13 +84,12 @@ class AbstractGame(object):
             self.gamemap[layer_name].set_default(self.objects[obj_id])
 
         self.gamemap.clear_changed_data()
-        self.new_objects.clear()
 
     def add_object(self, name, coord=(), *arg, **kwarg):
         obj_class = getattr(game_objects, name)
         obj = obj_class(self.gamemap, coord, *arg, **kwarg)
         self.objects.append(obj)
-        self.new_objects.add(obj)
+        self.send_drawdata(obj)
         return obj
 
     @sender.send_meth('gameinfo')
@@ -112,8 +110,8 @@ class AbstractGame(object):
         return [obj.get_drawdata() for obj in self.objects]
 
     @sender.send_meth('drawdata')
-    def send_new_drawdata(self):
-        return [obj.get_drawdata() for obj in self.new_objects]
+    def send_drawdata(self, obj):
+        return [obj.get_drawdata()]
 
 @sender.send_cls()
 class Game(AbstractGame):
@@ -146,9 +144,7 @@ class Game(AbstractGame):
     def step(self):
         while True:
             if self.gamemap.changed():
-                self.send_new_drawdata()
                 self.send_change_coord()
-                self.new_objects.clear()
             sleep(0.04)
 
 @sender.send_cls('Game')
