@@ -65,6 +65,13 @@ function switch_parse(data) {
             gamelist.add(indef, sizeX, sizeY);
         })
     }
+    else if(data[0] == 'scores') {
+        var n = data[1];
+        var indef = n[0];
+        var color = game.objects[indef].color;
+        var value = n[1];
+        scores.add(color, value);
+    }
     else if(data[0] == 'gameinfo') {
         window.game = new Game(data[1][2]);
         game.setSize(data[1][0], data[1][1]);

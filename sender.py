@@ -72,7 +72,7 @@ def _replace_sendfun(_fun):
             _send_to = kwargs['_send_to']
             del kwargs['_send_to']
         else:
-            _send_to = []
+            _send_to = None
         data = _fun(self, *args, **kwargs)
         if not data:
             return
@@ -135,7 +135,7 @@ class Wrapper(object):
             self.keep_obj = None
 
     def send(self, data, sendto):
-        if not sendto:
+        if sendto is None:
             sendto = self.subscribers
 
         data = self.packager(data)

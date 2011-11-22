@@ -71,6 +71,22 @@ function GameList() {
     }
 };
 
+function Scores() {
+    return {
+        'div': document.getElementById('scores'),
+        'add': function(color, value) {
+            var el = document.getElementById(color);
+            if(!el) {
+                var el = document.createElement('div');
+                el.setAttribute('id', color);
+                document.getElementById('scores').appendChild(el);
+            }
+            el.innerHTML = '' + color + ' / ' + value;
+        }
+    }
+};
+var scores = Scores();
+
 function createGame() {
     var ml = document.getElementById('mapslist');
     var value = ml.options[ml.selectedIndex].value;

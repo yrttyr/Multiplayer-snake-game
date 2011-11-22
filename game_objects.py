@@ -68,6 +68,7 @@ class Rabbit(GameObject):
     def coll(self, coll_obj, map_object):
         self.pieces.remove(map_object)
         coll_obj.len += 5
+        coll_obj.scores.add(2)
         return True
 
     def step(self):
@@ -99,12 +100,13 @@ class StartPosition(GameObject):
 class Snake(GameObject):
     direct = (0, -1), (1, 0), (0, 1), (-1, 0)
 
-    def __init__(self, gamemap, coord, rotation, color):
+    def __init__(self, gamemap, coord, rotation, color, scores):
         self.rotation = rotation
         self.map_layer = 'base'
         super(Snake, self).__init__(gamemap, (), 'snake')
         self.speed = 0.4
         self.drawdata['color'] = color
+        self.scores = scores
         self.start(coord)
 
     def start(self, coord):
@@ -119,9 +121,6 @@ class Snake(GameObject):
         self.alive = False
         del self.pieces[:]
         self.greenlet.kill()
-
-    def __del__(self):
-        print 'snake del'
 
     def del_last(self):
         self.pieces.pop(0)
@@ -142,6 +141,7 @@ class Snake(GameObject):
 
     def coll(self, coll_obj, map_object):
         coll_obj.len -= 1
+        coll_obj.scores.sub(1)
         return False
 
     def step(self):

@@ -30,6 +30,10 @@ class GamesList(list):
         self.send_game(game)
         sub.get_obj('Player').clear(game)
 
+        for pl in sub.wrappers['Game'].subscribers:
+            if hasattr(pl, 'scores'):
+                pl.send_scores()
+
     @sender.recv_meth()
     def connect_game(self, sub, game_id):
         sub.subscribe(game_id)
@@ -115,7 +119,8 @@ class AbstractGame(object):
 
 @sender.send_cls()
 class Game(AbstractGame):
-    call_with_conn = 'send_gameinfo', 'send_all_drawdata', 'send_all_coord'
+    call_with_conn = 'send_gameinfo', 'send_all_drawdata', \
+                     'send_all_coord'
 
     def __init__(self, cont, map_key):
         super(Game, self).__init__(cont)
@@ -128,12 +133,12 @@ class Game(AbstractGame):
         self.add_object('Rabbit')
         self.greenlet = spawn(self.step)
 
-    def add_snake(self, coord, direct):
+    def add_snake(self, coord, direct, scores):
         if self.snake_count >= self.max_snake:
             return None
         self.snake_count += 1
         return self.add_object('Snake', coord, direct,
-                               self.snake_color.pop())
+                               self.snake_color.pop(), scores)
 
     def remove_snake(self, snake):
         self.snake_count -= 1
