@@ -11,12 +11,12 @@ def sendto(to, senders, class_name, func_name):
     for sender in senders:
         getattr(sender.get_obj(class_name), func_name)(_send_to=to)
 
-def send_cls(group_name=None, singleton=False):
+def send_cls(name=None, singleton=False):
     def inner(_cls):
-        if group_name is None:
-            group_name_local = _cls.__name__
+        if name is None:
+            name_local = _cls.__name__
         else:
-            group_name_local = group_name
+            name_local = name
 
         send_meth, recv_meth = _get_methods(_cls)
         for meth in send_meth:
@@ -27,7 +27,7 @@ def send_cls(group_name=None, singleton=False):
         recvmeth_names = [meth.name for meth in recv_meth]
         call_with_conn = getattr(_cls, 'call_with_conn', ())
 
-        _replace_init(_cls, group_name_local, recvmeth_names,
+        _replace_init(_cls, name_local, recvmeth_names,
                      call_with_conn, singleton)
         _replace_del(_cls)
         return _cls
@@ -44,16 +44,16 @@ def _get_methods(cls):
             recv.append(atr)
     return send, recv
 
-def _replace_init(_cls, group_name, recvmeth_names,
+def _replace_init(_cls, name, recvmeth_names,
                  call_with_conn, singleton):
     _old_init = _cls.__init__
     def _initfun(self, *args, **kwargs):
         if id(self) not in wrappers: # Защита при вызове __init__ родителя
-            _wrapper = Wrapper(self, group_name,
-                               recvmeth_names, call_with_conn)
+            _wrapper = Wrapper(self, name, recvmeth_names,
+                               call_with_conn)
             wrappers[id(self)] = _wrapper
             if singleton:
-                wrappers[_cls.__name__] = _wrapper
+                wrappers[name] = _wrapper
         _old_init(self, *args, **kwargs)
     _cls.__init__ = _initfun
 

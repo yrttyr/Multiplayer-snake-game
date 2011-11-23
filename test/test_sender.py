@@ -21,7 +21,7 @@ class TestSendto(unittest.TestCase):
     def setUp(self):
         reload(sender)
 
-        @sender.send_cls('Test1', singleton=True)
+        @sender.send_cls(singleton=True)
         class C1(object):
             call_with_conn = ()
 
@@ -60,12 +60,12 @@ class TestSendto(unittest.TestCase):
         self.subscriber2.subscribe(self.c1)
 
         sub = self.subscriber1
-        sender.sendto(sub, sub.wrappers['Test1'].subscribers,
-                      'Test1', 'data_1')
+        sender.sendto(sub, sub.wrappers['C1'].subscribers,
+                      'C1', 'data_1')
 
         sub = self.subscriber2
         sender.sendto(sub, [self.subscriber2],
-                      'Test1', 'data_2')
+                      'C1', 'data_2')
 
         self.assertEqual(self.connect1.data, [
                          '["1_1","1_1"]',
@@ -77,7 +77,7 @@ class TestDelete(unittest.TestCase):
     def setUp(self):
         reload(sender)
 
-        @sender.send_cls('Test', singleton=True)
+        @sender.send_cls(singleton=True)
         class C(object):
             pass
         self.C = C
@@ -87,7 +87,7 @@ class TestDelete(unittest.TestCase):
 
         self.subscriber = sender.Subscriber(None)
         self.subscriber.subscribe(self.c)
-        self.weak_send_obj = weakref.ref(self.subscriber.wrappers['Test'])
+        self.weak_send_obj = weakref.ref(self.subscriber.wrappers['C'])
 
     def test_del_obj(self):
         del self.c
@@ -95,26 +95,26 @@ class TestDelete(unittest.TestCase):
         self.assertIsInstance(self.weak_send_obj(), sender.Wrapper)
 
     def test_unsub(self):
-        self.subscriber.unsubscribe('Test')
+        self.subscriber.unsubscribe('C')
         self.assertIsInstance(self.weak_c(), self.C)
         self.assertIsInstance(self.weak_send_obj(), sender.Wrapper)
 
     def test_unsub_and_del_obj(self):
-        self.subscriber.unsubscribe('Test')
+        self.subscriber.unsubscribe('C')
         del self.c
         self.assertIsNone(self.weak_c())
         self.assertIsNone(self.weak_send_obj())
 
     def test_del_obj_and_unsub(self):
         del self.c
-        self.subscriber.unsubscribe('Test')
+        self.subscriber.unsubscribe('C')
         self.assertIsNone(self.weak_c())
         self.assertIsNone(self.weak_send_obj())
 
     def test_del_obj_and_link_and_unsub(self):
         del self.c
         link = self.weak_c()
-        self.subscriber.unsubscribe('Test')
+        self.subscriber.unsubscribe('C')
         self.assertIsInstance(self.weak_c(), self.C)
         self.assertIsInstance(self.weak_send_obj(), sender.Wrapper)
 
@@ -130,7 +130,7 @@ class TestSend(unittest.TestCase):
     def setUp(self):
         reload(sender)
 
-        @sender.send_cls('Test', singleton=True)
+        @sender.send_cls(singleton=True)
         class C(object):
             call_with_conn = 'data_1', 'data_4'
 
@@ -150,7 +150,7 @@ class TestSend(unittest.TestCase):
             def data_4(self):
                 return 'info_4'
 
-        @sender.send_cls('Test2', singleton=True)
+        @sender.send_cls(singleton=True)
         class Cn(object):
             call_with_conn = ()
 
@@ -221,7 +221,7 @@ class TestSend(unittest.TestCase):
         self.subscriber2.subscribe(self.c)
         self.subscriber1.subscribe(self.cn)
 
-        self.cn.send_data(_send_to='Test')
+        self.cn.send_data(_send_to='C')
 
         self.assertEqual(self.connect1.data, [
                          '["test_send_1","info_1"]',
@@ -232,7 +232,7 @@ class TestSend(unittest.TestCase):
                          '["test_send_4","info_4"]',
                          '["test_send_Cn","info_Cn"]'])
         # придумать ошибку
-        # self.assertRaises(KeyError, self.c.data_1(_send_to='Test'))
+        # self.assertRaises(KeyError, self.c.data_1(_send_to='C'))
 
 class TestCreateWrapper(unittest.TestCase):
     def setUp(self):
@@ -242,7 +242,7 @@ class TestCreateWrapper(unittest.TestCase):
         class C(object):
             pass
 
-        CW = sender.send_cls('Test')(C)
+        CW = sender.send_cls()(C)
         c = CW()
 
     def test_inheritance(self):
@@ -255,11 +255,11 @@ class TestCreateWrapper(unittest.TestCase):
         Wrapper = call_count(sender.Wrapper)
         sender.Wrapper = Wrapper
 
-        @sender.send_cls('Parent')
+        @sender.send_cls()
         class P(object):
             pass
 
-        @sender.send_cls('Child')
+        @sender.send_cls()
         class C(P):
             pass
 
@@ -270,7 +270,7 @@ class TestSubscribeUnsubscribe(unittest.TestCase):
     def setUp(self):
         reload(sender)
 
-        @sender.send_cls('Test', singleton=True)
+        @sender.send_cls(singleton=True)
         class C(object):
             pass
         self.C = C
@@ -283,21 +283,21 @@ class TestSubscribeUnsubscribe(unittest.TestCase):
 
     def test_by_object(self):
         self.subscriber.subscribe(self.c)
-        self.assertEqual(self.subscriber.get_obj('Test'), self.c)
+        self.assertEqual(self.subscriber.get_obj('C'), self.c)
         self.subscriber.unsubscribe(self.c)
-        self.assertRaises(KeyError, self.subscriber.get_obj, 'Test')
+        self.assertRaises(KeyError, self.subscriber.get_obj, 'C')
 
     def test_by_wrapper(self):
         self.subscriber.subscribe(self.weak_wrapper())
-        self.assertEqual(self.subscriber.get_obj('Test'), self.c)
+        self.assertEqual(self.subscriber.get_obj('C'), self.c)
         self.subscriber.unsubscribe(self.weak_wrapper())
-        self.assertRaises(KeyError, self.subscriber.get_obj, 'Test')
+        self.assertRaises(KeyError, self.subscriber.get_obj, 'C')
 
     def test_by_object_id(self):
         self.subscriber.subscribe(id(self.c))
-        self.assertEqual(self.subscriber.get_obj('Test'), self.c)
+        self.assertEqual(self.subscriber.get_obj('C'), self.c)
         self.subscriber.unsubscribe(id(self.c))
-        self.assertRaises(KeyError, self.subscriber.get_obj, 'Test')
+        self.assertRaises(KeyError, self.subscriber.get_obj, 'C')
 
 if __name__ == '__main__':
     unittest.main()
