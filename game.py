@@ -26,19 +26,14 @@ class GamesList(list):
     def create_game(self, sub, key):
         game = Game(self, key)
         self.append(game)
-        sub.subscribe(game)
-        self.send_game(game)
-        sub.get_obj('Player').clear(game)
-
-        for pl in sub.wrappers['Game'].subscribers:
-            if hasattr(pl, 'scores'):
-                pl.send_scores()
+        self.connect_game(sub, game)
 
     @sender.recv_meth()
     def connect_game(self, sub, game_id):
         sub.subscribe(game_id)
         game = sub.get_obj('Game')
         sub.get_obj('Player').clear(game)
+        sender.sendto(sub, sub.wrappers['Game'].subscribers, 'send_score')
 
     @sender.send_meth('gamelist')
     def send_all_games(self):

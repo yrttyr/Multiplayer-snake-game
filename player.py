@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from weakref import ref
+
 import sender
 
 @sender.send_cls()
@@ -37,7 +39,7 @@ class Player(object):
                                         self.scores)
             if snake:
                 self.snake = snake
-                self.send_score()
+                self.send_score(_send_to='Game')
 
     @sender.send_meth('scores')
     def send_score(self):
@@ -52,18 +54,24 @@ class Player(object):
 class Scores(object):
     __slots__ = ('_val', '_player')
 
+    def send(fn):
+        def iner(self, *args, **kwars):
+            fn(self, *args, **kwars)
+            self._player().send_score(_send_to='Game')
+        return iner
+
+    @send
     def __init__(self, player):
         self._val = 0
-        self._player = player
-        self._player.send_score()
+        self._player = ref(player)
 
     def get(self):
         return self._val
 
+    @send
     def add(self, n):
         self._val += n
-        self._player.send_score()
 
+    @send
     def sub(self, n):
         self._val -= n
-        self._player.send_score()

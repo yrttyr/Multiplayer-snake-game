@@ -7,6 +7,12 @@ import json
 
 wrappers = WeakValueDictionary()
 
+def sendto(to, senders, func_name):
+    print 'senders', list(senders)
+    for sender in senders:
+        print 'send', sender
+        getattr(sender.get_obj('Player'), func_name)(_send_to=to)
+
 def send_cls(group_name=None, singleton=False):
     def inner(_cls):
         if group_name is None:
@@ -135,12 +141,20 @@ class Wrapper(object):
             self.keep_obj = None
 
     def send(self, data, sendto):
+        data = self.packager(data)
+
         if sendto is None:
             sendto = self.subscribers
+        elif isinstance(sendto, basestring):
+            if len(self.subscribers) == 1:
+                for sub in self.subscribers:
+                    sendto = sub.wrappers[sendto].subscribers
+            else:
+                raise
+        elif not isinstance(sendto, (tuple, list, set)):
+            sendto = (sendto, )
 
-        data = self.packager(data)
-        tup = tuple(sendto)
-        for sub in tup:
+        for sub in sendto:
             sub.send(data)
 
     def packager(self, data):
