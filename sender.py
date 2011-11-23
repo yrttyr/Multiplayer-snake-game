@@ -7,11 +7,9 @@ import json
 
 wrappers = WeakValueDictionary()
 
-def sendto(to, senders, func_name):
-    print 'senders', list(senders)
+def sendto(to, senders, class_name, func_name):
     for sender in senders:
-        print 'send', sender
-        getattr(sender.get_obj('Player'), func_name)(_send_to=to)
+        getattr(sender.get_obj(class_name), func_name)(_send_to=to)
 
 def send_cls(group_name=None, singleton=False):
     def inner(_cls):

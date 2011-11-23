@@ -10,6 +10,68 @@ import weakref
 import sender
 
 
+class TestSendto(unittest.TestCase):
+    class Connect(object):
+        def __init__(self):
+            self.data = []
+
+        def send(self, data):
+            self.data.append(data)
+
+    def setUp(self):
+        reload(sender)
+
+        @sender.send_cls('Test1', singleton=True)
+        class C1(object):
+            call_with_conn = ()
+
+            @sender.send_meth('1_1')
+            def data_1(self):
+                return '1_1'
+
+            @sender.send_meth('1_2')
+            def data_2(self):
+                return '1_2'
+        self.C1 = C1
+
+        @sender.send_cls('Test2', singleton=True)
+        class C2(object):
+            call_with_conn = ()
+
+            @sender.send_meth('2_1')
+            def data_1(self):
+                return '2_1'
+
+            @sender.send_meth('2_2')
+            def data_2(self):
+                return '2_2'
+        self.C2 = C2
+
+        self.c1 = C1()
+        self.c2 = C2()
+        self.connect1 = self.Connect()
+        self.subscriber1 = sender.Subscriber(self.connect1)
+        self.connect2 = self.Connect()
+        self.subscriber2 = sender.Subscriber(self.connect2)
+
+    def test_unname____(self):
+        self.subscriber1.subscribe(self.c1)
+        self.subscriber1.subscribe(self.c2)
+        self.subscriber2.subscribe(self.c1)
+
+        sub = self.subscriber1
+        sender.sendto(sub, sub.wrappers['Test1'].subscribers,
+                      'Test1', 'data_1')
+
+        sub = self.subscriber2
+        sender.sendto(sub, [self.subscriber2],
+                      'Test1', 'data_2')
+
+        self.assertEqual(self.connect1.data, [
+                         '["1_1","1_1"]',
+                         '["1_1","1_1"]'])
+        self.assertEqual(self.connect2.data, [
+                         '["1_2","1_2"]',])
 class TestDelete(unittest.TestCase):
 
     def setUp(self):
@@ -56,7 +118,6 @@ class TestDelete(unittest.TestCase):
         self.assertIsInstance(self.weak_c(), self.C)
         self.assertIsInstance(self.weak_send_obj(), sender.Wrapper)
 
-
 class TestSend(unittest.TestCase):
 
     class Connect(object):
@@ -88,49 +149,90 @@ class TestSend(unittest.TestCase):
             @sender.send_meth('test_send_4')
             def data_4(self):
                 return 'info_4'
+
+        @sender.send_cls('Test2', singleton=True)
+        class Cn(object):
+            call_with_conn = ()
+
+            @sender.send_meth('test_send_Cn')
+            def send_data(self):
+                return 'info_Cn'
+
         self.C = C
+        self.c = self.C()
+        self.Cn = Cn
+        self.cn = self.Cn()
+
+        self.connect1 = self.Connect()
+        self.subscriber1 = sender.Subscriber(self.connect1)
+
+        self.connect2 = self.Connect()
+        self.subscriber2 = sender.Subscriber(self.connect2)
 
     def test_call_with_conn(self):
-        c = self.C()
+        self.subscriber1.subscribe(self.c)
+        self.subscriber2.subscribe(self.c)
 
-        connect_1 = self.Connect()
-        subscriber_1 = sender.Subscriber(connect_1)
-        subscriber_1.subscribe(c)
-
-        connect_2 = self.Connect()
-        subscriber_2 = sender.Subscriber(connect_2)
-        subscriber_2.subscribe(c)
-
-        self.assertEqual(connect_1.data, [
+        self.assertEqual(self.connect1.data, [
                          '["test_send_1","info_1"]',
                          '["test_send_4","info_4"]'])
-        self.assertEqual(connect_2.data, [
+        self.assertEqual(self.connect2.data, [
                          '["test_send_1","info_1"]',
                          '["test_send_4","info_4"]'])
 
     def test_send(self):
-        c = self.C()
+        self.subscriber1.subscribe(self.c)
+        self.c.data_2()
 
-        connect_1 = self.Connect()
-        subscriber_1 = sender.Subscriber(connect_1)
-        subscriber_1.subscribe(c)
-        c.data_2()
+        self.subscriber2.subscribe(self.c)
+        self.c.data_3()
 
-        connect_2 = self.Connect()
-        subscriber_2 = sender.Subscriber(connect_2)
-        subscriber_2.subscribe(c)
-        c.data_3()
-
-        self.assertEqual(connect_1.data, [
+        self.assertEqual(self.connect1.data, [
                          '["test_send_1","info_1"]',
                          '["test_send_4","info_4"]',
                          '["test_send_2","info_2"]',
                          '["test_send_3","info_3"]'])
-        self.assertEqual(connect_2.data, [
+        self.assertEqual(self.connect2.data, [
                          '["test_send_1","info_1"]',
                          '["test_send_4","info_4"]',
                          '["test_send_3","info_3"]'])
 
+    def test_sendto(self):
+        self.subscriber1.subscribe(self.c)
+        self.subscriber2.subscribe(self.c)
+
+        self.c.data_2(_send_to=self.connect1)
+        self.c.data_1(_send_to=self.connect2)
+        self.c.data_3(_send_to=[self.connect2, self.connect1])
+
+        self.assertEqual(self.connect1.data, [
+                         '["test_send_1","info_1"]',
+                         '["test_send_4","info_4"]',
+                         '["test_send_2","info_2"]',
+                         '["test_send_3","info_3"]'])
+        self.assertEqual(self.connect2.data, [
+                         '["test_send_1","info_1"]',
+                         '["test_send_4","info_4"]',
+                         '["test_send_1","info_1"]',
+                         '["test_send_3","info_3"]'])
+
+    def test_sendto_by_groupname(self): # переимновать
+        self.subscriber1.subscribe(self.c)
+        self.subscriber2.subscribe(self.c)
+        self.subscriber1.subscribe(self.cn)
+
+        self.cn.send_data(_send_to='Test')
+
+        self.assertEqual(self.connect1.data, [
+                         '["test_send_1","info_1"]',
+                         '["test_send_4","info_4"]',
+                         '["test_send_Cn","info_Cn"]'])
+        self.assertEqual(self.connect2.data, [
+                         '["test_send_1","info_1"]',
+                         '["test_send_4","info_4"]',
+                         '["test_send_Cn","info_Cn"]'])
+        # придумать ошибку
+        # self.assertRaises(KeyError, self.c.data_1(_send_to='Test'))
 
 class TestCreateWrapper(unittest.TestCase):
     def setUp(self):
