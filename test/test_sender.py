@@ -21,7 +21,7 @@ class TestSendto(unittest.TestCase):
     def setUp(self):
         reload(sender)
 
-        @sender.send_cls(singleton=True)
+        @sender.send_cls()
         class C1(object):
             call_with_conn = ()
 
@@ -34,7 +34,7 @@ class TestSendto(unittest.TestCase):
                 return '1_2'
         self.C1 = C1
 
-        @sender.send_cls('Test2', singleton=True)
+        @sender.send_cls()
         class C2(object):
             call_with_conn = ()
 
@@ -77,7 +77,7 @@ class TestDelete(unittest.TestCase):
     def setUp(self):
         reload(sender)
 
-        @sender.send_cls(singleton=True)
+        @sender.send_cls()
         class C(object):
             pass
         self.C = C
@@ -130,7 +130,7 @@ class TestSend(unittest.TestCase):
     def setUp(self):
         reload(sender)
 
-        @sender.send_cls(singleton=True)
+        @sender.send_cls()
         class C(object):
             call_with_conn = 'data_1', 'data_4'
 
@@ -150,7 +150,7 @@ class TestSend(unittest.TestCase):
             def data_4(self):
                 return 'info_4'
 
-        @sender.send_cls(singleton=True)
+        @sender.send_cls()
         class Cn(object):
             call_with_conn = ()
 
@@ -266,11 +266,31 @@ class TestCreateWrapper(unittest.TestCase):
         c = C()
         self.assertEqual(count[0], 1)
 
+    def test_singleton(self):
+        @sender.send_cls()
+        class C(object):
+            pass
+        c = C()
+        self.assertNotIn('C', sender.wrappers)
+
+        @sender.send_cls(singleton=True)
+        class CS(object):
+            pass
+        cs = CS()
+        self.assertIn('CS', sender.wrappers)
+
+        @sender.send_cls('new_name', singleton=True)
+        class CN(object):
+            pass
+        cn = CN()
+        self.assertIn('new_name', sender.wrappers)
+        self.assertNotIn('cn', sender.wrappers)
+
 class TestSubscribeUnsubscribe(unittest.TestCase):
     def setUp(self):
         reload(sender)
 
-        @sender.send_cls(singleton=True)
+        @sender.send_cls()
         class C(object):
             pass
         self.C = C
