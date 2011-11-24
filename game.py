@@ -33,7 +33,7 @@ class GamesList(list):
         sub.subscribe(game_id)
         game = sub.get_obj('Game')
         sub.get_obj('Player').clear(game)
-        sender.sendto(sub, sub.wrappers['Game'].subscribers,
+        sender.sendto(sub, sub.wrappers['Game'],
                       'Player', 'send_score')
 
     @sender.send_meth('gamelist')

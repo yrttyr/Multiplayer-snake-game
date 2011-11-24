@@ -120,6 +120,10 @@ class Wrapper(object):
     def obj(self):
         return self._obj()
 
+    def __iter__(self):
+        for i in self.subscribers:
+            yield i
+
     def kill(self):
         self._keeper.remove(self)
 
