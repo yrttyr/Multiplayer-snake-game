@@ -120,6 +120,9 @@ class Wrapper(object):
     def obj(self):
         return self._obj()
 
+    def __len__(self):
+        return len(self.subscribers)
+
     def __iter__(self):
         for i in self.subscribers:
             yield i
@@ -148,8 +151,8 @@ class Wrapper(object):
         if sendto is None:
             sendto = self.subscribers
         elif isinstance(sendto, basestring):
-            if len(self.subscribers) == 1:
-                for sub in self.subscribers:
+            if len(self) == 1:
+                for sub in self:
                     sendto = sub.wrappers[sendto].subscribers
             else:
                 raise
