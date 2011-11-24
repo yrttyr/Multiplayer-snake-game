@@ -153,7 +153,7 @@ class Wrapper(object):
         elif isinstance(sendto, basestring):
             if len(self) == 1:
                 for sub in self:
-                    sendto = sub.wrappers[sendto].subscribers
+                    sendto = sub[sendto].subscribers
             else:
                 raise
         elif not isinstance(sendto, (tuple, list, set)):
@@ -171,13 +171,19 @@ class Subscriber(object):
         self.wrappers = dict()
         self.call()
 
+    def __getitem__(self, key):
+        return self.wrappers[key]
+
+    def __contains__(self, key):
+        return key in self.wrappers
+
     def get_obj(self, name):
-        return self.wrappers[name].obj
+        return self[name].obj
 
     def subscribe(self, data):
         wrapper = self._get_wrapper(data)
         group_name = wrapper.group_name
-        if group_name in self.wrappers:
+        if group_name in self:
             self.unsubscribe(group_name)
 
         wrapper.subscribe(self)
@@ -186,13 +192,13 @@ class Subscriber(object):
     def unsubscribe(self, data):
         wrapper = self._get_wrapper(data, True)
         group_name = wrapper.group_name
-        self.wrappers[group_name].unsubscribe(self)
+        self[group_name].unsubscribe(self)
         del self.wrappers[group_name]
 
     def _get_wrapper(self, data, unsub=False):
         if isinstance(data, basestring):
             if unsub:
-                return self.wrappers[data]
+                return self[data]
             return wrappers[data]
         elif isinstance(data, int):
             return wrappers[data]

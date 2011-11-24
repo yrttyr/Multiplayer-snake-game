@@ -60,7 +60,7 @@ class TestSendto(unittest.TestCase):
         self.subscriber2.subscribe(self.c1)
 
         sub = self.subscriber1
-        sender.sendto(sub, sub.wrappers['C1'].subscribers,
+        sender.sendto(sub, sub['C1'].subscribers,
                       'C1', 'data_1')
 
         sub = self.subscriber2
@@ -87,7 +87,7 @@ class TestDelete(unittest.TestCase):
 
         self.subscriber = sender.Subscriber(None)
         self.subscriber.subscribe(self.c)
-        self.weak_send_obj = weakref.ref(self.subscriber.wrappers['C'])
+        self.weak_send_obj = weakref.ref(self.subscriber['C'])
 
     def test_del_obj(self):
         del self.c
