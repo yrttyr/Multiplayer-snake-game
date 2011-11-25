@@ -1,7 +1,6 @@
 "use strict";
 
 var needDraw_fill = function(X, Y) {
-    console.error(X,Y);
     for (var x = 0; x <= X - 1; x++) {
         for (var y = 0; y <= Y - 1; y++) {
             game.needDraw.push([x, y]);
@@ -57,17 +56,16 @@ function Gamemap(default_obj_id) {
 };
 
 function GameList() {
-    return {
-        'div': document.getElementById('games'),
-        'add': function(indef, sizeX, sizeY) {
-            var el = document.getElementById(indef);
-            if(!el) {
-                var el = document.createElement('div');
-                el.setAttribute('id', indef);
-                this.div.appendChild(el);
-            }
-            el.innerHTML = '<a href="" onclick="connect.sendData([\'connect_game\',' + indef + ']); return false";>' + indef + '</a>';
+    this.div = document.getElementById('games');
+    this.add = function(indef, sizeX, sizeY) {
+        console.error('add');
+        var el = document.getElementById(indef);
+        if(!el) {
+            var el = document.createElement('div');
+            el.setAttribute('id', indef);
+            this.div.appendChild(el);
         }
+        el.innerHTML = '<a href="" onclick="connect.sendData([\'connect_game\',' + indef + ']); return false";>' + indef + '</a>';
     }
 };
 

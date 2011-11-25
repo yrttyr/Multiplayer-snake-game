@@ -65,6 +65,7 @@ function switch_parse(data) {
                 var indef = value[0];
                 var sizeX = value[1];
                 var sizeY = value[2];
+                console.error('add');
                 gamelist.add(indef, sizeX, sizeY);
             })
             break

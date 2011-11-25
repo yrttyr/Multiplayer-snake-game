@@ -15,8 +15,7 @@ window.onload = function() {
 };
 
 function init(images) {
-    window.gamelist = GameList();
-    //window.gamelistdiv = document.getElementById("games");
+    window.gamelist = new GameList();
 
     window.images = images;
     window.game = new Game();
