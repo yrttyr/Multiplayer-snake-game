@@ -5,6 +5,11 @@ from weakref import WeakValueDictionary, WeakSet, ref
 from collections import namedtuple, defaultdict
 import json
 
+
+class SendtoError(Exception):
+    def __str__(self):
+        return 'В сете должен быть только один элемент'
+
 wrappers = WeakValueDictionary()
 
 def sendto(to, senders, class_name, func_name):
@@ -155,7 +160,7 @@ class Wrapper(object):
                 for sub in self:
                     sendto = sub[sendto].subscribers
             else:
-                raise
+                raise SendtoError
         elif not isinstance(sendto, (tuple, list, set)):
             sendto = (sendto, )
 

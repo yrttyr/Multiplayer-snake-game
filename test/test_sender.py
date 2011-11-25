@@ -32,7 +32,6 @@ class TestSendto(unittest.TestCase):
             @sender.send_meth('1_2')
             def data_2(self):
                 return '1_2'
-        self.C1 = C1
 
         @sender.send_cls()
         class C2(object):
@@ -45,7 +44,6 @@ class TestSendto(unittest.TestCase):
             @sender.send_meth('2_2')
             def data_2(self):
                 return '2_2'
-        self.C2 = C2
 
         self.c1 = C1()
         self.c2 = C2()
@@ -54,24 +52,26 @@ class TestSendto(unittest.TestCase):
         self.connect2 = self.Connect()
         self.subscriber2 = sender.Subscriber(self.connect2)
 
-    def test_unname____(self):
         self.subscriber1.subscribe(self.c1)
         self.subscriber1.subscribe(self.c2)
         self.subscriber2.subscribe(self.c1)
 
+    def test_send_to_subscribe(self):
         sub = self.subscriber1
-        sender.sendto(sub, sub['C1'].subscribers,
-                      'C1', 'data_1')
-
-        sub = self.subscriber2
-        sender.sendto(sub, [self.subscriber2],
-                      'C1', 'data_2')
+        sender.sendto(sub, sub['C1'], 'C1', 'data_1')
 
         self.assertEqual(self.connect1.data, [
                          '["1_1","1_1"]',
                          '["1_1","1_1"]'])
-        self.assertEqual(self.connect2.data, [
-                         '["1_2","1_2"]',])
+        self.assertEqual(self.connect2.data, [])
+
+    def test_send_to_list(self):
+        sub = self.subscriber1
+        sender.sendto(sub, [self.subscriber2], 'C1', 'data_2')
+        self.assertEqual(self.connect1.data, [
+                         '["1_2","1_2"]'])
+        self.assertEqual(self.connect2.data, [])
+
 class TestDelete(unittest.TestCase):
 
     def setUp(self):
@@ -216,7 +216,7 @@ class TestSend(unittest.TestCase):
                          '["test_send_1","info_1"]',
                          '["test_send_3","info_3"]'])
 
-    def test_sendto_by_groupname(self): # переимновать
+    def test_sendto_by_classname(self):
         self.subscriber1.subscribe(self.c)
         self.subscriber2.subscribe(self.c)
         self.subscriber1.subscribe(self.cn)
@@ -231,8 +231,8 @@ class TestSend(unittest.TestCase):
                          '["test_send_1","info_1"]',
                          '["test_send_4","info_4"]',
                          '["test_send_Cn","info_Cn"]'])
-        # придумать ошибку
-        # self.assertRaises(KeyError, self.c.data_1(_send_to='C'))
+
+        self.assertRaises(sender.SendtoError, self.c.data_1, _send_to='C')
 
 class TestCreateWrapper(unittest.TestCase):
     def setUp(self):
