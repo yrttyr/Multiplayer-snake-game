@@ -7,9 +7,6 @@ if(window.MozWebSocket) {
 function create_connect() {
     window.connect = new WebSocket("ws://localhost:8080/chat");
 
-    connect.onopen = function(e) {
-    };
-
     connect.onmessage = function(e) {
         var data = connect.parse(e.data);
         console.log(data);
@@ -26,9 +23,6 @@ function create_connect() {
         console.error('data', data);
         connect.send(data);
     };
-
-    //connect.onerror = function(e) {alert("error")};
-    //connect.onclose = function(e) {alert("closed")};
 }
 
 function switch_parse(data) {
@@ -65,7 +59,6 @@ function switch_parse(data) {
                 var indef = value[0];
                 var sizeX = value[1];
                 var sizeY = value[2];
-                console.error('add');
                 gamelist.add(indef, sizeX, sizeY);
             })
             break

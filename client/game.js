@@ -9,56 +9,53 @@ var needDraw_fill = function(X, Y) {
 };
 
 function Gamemap(default_obj_id) {
-    return {
-        'dict': {},
-        'default_obj_id': default_obj_id,
-        'set': function(k, x, type) {
-            this.dict[k] = {'indef': x, 'type': type || ''};
+    this.dict = {};
+    this.default_obj_id = default_obj_id;
+    this.set = function(k, x, type) {
+        this.dict[k] = {'indef': x, 'type': type || ''};
+        game.needDraw.push(k);
+    },
+    this.setType = function(k, x) {
+        if(k in this.dict) {
+            this.dict[k].type = x;
             game.needDraw.push(k);
-        },
-        'setType': function(k, x) {
-            if(k in this.dict) {
-                this.dict[k].type = x;
-                game.needDraw.push(k);
-            }
-            else {
-                console.error('Cell empty', k);
-            }
-        },
-        'get': function(k) {
-            return this.dict[k] || {'indef':  this.default_obj_id, 'type': ''};
-        },
-        'getType': function(k) {
-            if(k in this.dict) {
-                return this.dict[k].type;
-            }
-            return '';
-        },
-        'getListIdAndCoord': function() {
-            var data = [];
-            for(var key in this.dict) {
-                var indef = this.dict[key].indef;
-                if(indef == 0 || indef == 1) {
-                    continue;
-                }
-                var coord = key.split(',');
-                coord = [parseInt(coord[0]), parseInt(coord[1])];
-                if(coord[0] < 0 || coord[0] >= game.SizeX ||
-                   coord[1] < 0 || coord[1] >= game.SizeY) {
-                       console.error(coord);
-                        continue;
-                }
-                data.push([indef, coord]);
-            }
-            return data;
         }
-    }
+        else {
+            console.error('Cell empty', k);
+        }
+    };
+    this.get = function(k) {
+        return this.dict[k] || {'indef':  this.default_obj_id, 'type': ''};
+    };
+    this.getType = function(k) {
+        if(k in this.dict) {
+            return this.dict[k].type
+        }
+        return ''
+    };
+    this.getListIdAndCoord = function() {
+        var data = [];
+        for(var key in this.dict) {
+            var indef = this.dict[key].indef;
+            if(indef == 0 || indef == 1) {
+                continue;
+            }
+            var coord = key.split(',');
+            coord = [parseInt(coord[0]), parseInt(coord[1])];
+            if(coord[0] < 0 || coord[0] >= game.SizeX ||
+               coord[1] < 0 || coord[1] >= game.SizeY) {
+                   console.error(coord);
+                    continue;
+            }
+            data.push([indef, coord]);
+        }
+        return data
+    };
 };
 
 function GameList() {
     this.div = document.getElementById('games');
     this.add = function(indef, sizeX, sizeY) {
-        console.error('add');
         var el = document.getElementById(indef);
         if(!el) {
             var el = document.createElement('div');
@@ -70,20 +67,18 @@ function GameList() {
 };
 
 function Scores() {
-    return {
-        'div': document.getElementById('scores'),
-        'add': function(color, value) {
-            var el = document.getElementById(color);
-            if(!el) {
-                var el = document.createElement('div');
-                el.setAttribute('id', color);
-                document.getElementById('scores').appendChild(el);
-            }
-            el.innerHTML = '' + color + ' / ' + value;
+    this.div = document.getElementById('scores');
+    this.add = function(color, value) {
+        var el = document.getElementById(color);
+        if(!el) {
+            var el = document.createElement('div');
+            el.setAttribute('id', color);
+            document.getElementById('scores').appendChild(el);
         }
-    }
+        el.innerHTML = '' + color + ' / ' + value;
+    };
 };
-var scores = Scores();
+var scores = new Scores();
 
 function createGame() {
     var ml = document.getElementById('mapslist');
