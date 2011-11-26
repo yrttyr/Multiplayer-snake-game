@@ -26,6 +26,7 @@ class GamesList(list):
     def create_game(self, sub, key):
         game = Game(self, key)
         self.append(game)
+        self.send_game(game)
         self.connect_game(sub, game)
 
     @sender.recv_meth()
