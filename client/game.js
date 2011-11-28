@@ -25,7 +25,7 @@ function Gamemap(default_obj_id) {
         }
     };
     this.get = function(k) {
-        return this.dict[k] || {'indef':  this.default_obj_id, 'type': ''};
+        return this.dict[k] || {'indef': this.default_obj_id, 'type': ''};
     };
     this.getType = function(k) {
         if(k in this.dict) {
@@ -67,18 +67,31 @@ function GameList() {
 };
 
 function Scores() {
-    this.div = document.getElementById('scores');
-    this.add = function(color, value) {
-        var el = document.getElementById(color);
+    this.div = document.getElementById('scoreslist');
+    this.add = function(indef, value) {
+        var el = document.getElementById(indef);
         if(!el) {
+            //var color = game.objects[indef].color;
             var el = document.createElement('div');
-            el.setAttribute('id', color);
-            document.getElementById('scores').appendChild(el);
+            el.setAttribute('id', indef);
+            this.div.appendChild(el);
         }
-        el.innerHTML = '' + color + ' / ' + value;
+        el.innerHTML = '' + indef + ' / ' + value;
+    };
+    this.del = function(indef) {
+        var el = document.getElementById(indef);
+        if(el) {
+            this.div.removeChild(el);
+        }
+    };
+    this.clear = function() {
+        if(this.div.hasChildNodes()) {
+            while (this.div.childNodes.length >= 1) {
+                this.div.removeChild(this.div.firstChild);
+            }
+        }
     };
 };
-var scores = new Scores();
 
 function createGame() {
     var ml = document.getElementById('mapslist');

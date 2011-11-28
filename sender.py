@@ -90,7 +90,7 @@ def _replace_sendfun(_fun):
 
 def _replace_recvfun(_fun):
     def _recvfun(self, *args, **kwargs):
-        return _fun(self, *args, **kwargs)  # Нужно ловля экцептов на неправильные аргументы
+        return _fun(self, *args, **kwargs)
     setattr(_fun.im_class, _fun.__name__, _recvfun)
 
 def send_meth(name):
@@ -99,6 +99,34 @@ def send_meth(name):
         _meth.name = name
         return _meth
     return inner
+
+def send_fun(name):
+    def inner(fn):
+        def _sendfun(self, *args, **kwargs):
+            if '_send_to' in kwargs:
+                sendto = kwargs['_send_to']
+                del kwargs['_send_to']
+            else:
+                raise
+            data = fn(self, *args, **kwargs)
+            if not data:
+                return
+
+            data = packager((name, data))
+
+            if isinstance(sendto, basestring):
+                for sub in self:
+                    sendto = sub[sendto].subscribers
+            elif not hasattr(sendto, '__iter__'):
+                sendto = (sendto, )
+
+            for sub in sendto:
+                sub.send(data)
+        return _sendfun
+    return inner
+
+def packager(data):
+    return json.dumps(data, separators=(',', ':'))
 
 def recv_meth(name=False):
     def inner(_meth):
@@ -161,7 +189,7 @@ class Wrapper(object):
                     sendto = sub[sendto].subscribers
             else:
                 raise SendtoError
-        elif not isinstance(sendto, (tuple, list, set)):
+        elif not hasattr(sendto, '__iter__'):
             sendto = (sendto, )
 
         for sub in sendto:

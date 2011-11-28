@@ -10,7 +10,13 @@ from gevent import sleep, spawn
 import sender
 
 from gamemap import GameMapContainer
+import player
 import game_objects
+
+
+class MaxplayerError(Exception):
+    def __str__(self):
+        return 'Достигнуто максимальное количество игроков'
 
 @sender.send_cls(singleton=True)
 class GamesList(list):
@@ -33,9 +39,12 @@ class GamesList(list):
     def connect_game(self, sub, game_id):
         sub.subscribe(game_id)
         game = sub.get_obj('Game')
-        sub.get_obj('Player').clear(game)
-        sender.sendto(sub, sub['Game'],
-                      'Player', 'send_score')
+        sub.get_obj('Player').setdata(game)
+
+        for s in sub['Game']:
+            scores = s.get_obj('Player').scores
+            if scores:
+                scores.send_score(_send_to=sub)
 
     @sender.send_meth('gamelist')
     def send_all_games(self):
@@ -130,12 +139,15 @@ class Game(AbstractGame):
         self.add_object('Rabbit')
         self.greenlet = spawn(self.step)
 
-    def add_snake(self, coord, direct, scores):
+    def add_snake(self, coord, direct):
         if self.snake_count >= self.max_snake:
-            return None
+            raise MaxplayerError
         self.snake_count += 1
-        return self.add_object('Snake', coord, direct,
+        scores = player.Scores()
+        snake = self.add_object('Snake', coord, direct,
                                self.snake_color.pop(), scores)
+        scores.setdata(self, snake.indef)
+        return snake, scores
 
     def remove_snake(self, snake):
         self.snake_count -= 1

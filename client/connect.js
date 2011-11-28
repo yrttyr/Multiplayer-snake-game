@@ -66,13 +66,18 @@ function switch_parse(data) {
         case 'scores':
             var n = data[1];
             var indef = n[0];
-            var color = game.objects[indef].color;
             var value = n[1];
-            scores.add(color, value);
+            if(value !== '') {
+                scores.add(indef, value);
+            }
+            else {
+                scores.del(indef);
+            }
             break
 
         case 'gameinfo':
             window.game = new Game(data[1][2]);
+            scores.clear();
             game.setSize(data[1][0], data[1][1]);
             if(data[1][3]) {
                 game.initMapEditor();

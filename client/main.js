@@ -16,6 +16,7 @@ window.onload = function() {
 
 function init(images) {
     window.gamelist = new GameList();
+    window.scores = new Scores();
 
     window.images = images;
     window.game = new Game();
