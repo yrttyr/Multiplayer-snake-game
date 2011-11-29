@@ -184,10 +184,18 @@ function Game(layer_info) {
             var base = this.gamemap['base'].get(coord);
 
             var ground_obj = this.objects[ground.indef];
-            ground_obj.draw(coord[0], coord[1], ground.type);
+            // Иногда объекты к новой карте не успевают загрузиться
+            // Возможно плохое решение и может приводить к большой нагрузке,
+            // если объекты долго не смогут загрузиться
+            if(ground_obj) {
+                ground_obj.draw(coord[0], coord[1], ground.type);
+            }
 
             var base_obj = this.objects[base.indef];
-            base_obj.draw(coord[0], coord[1], base.type);
+            // И здесь
+            if(base_obj) {
+                base_obj.draw(coord[0], coord[1], base.type);
+            }
 
             game.needDraw.splice(key, 1);
         }
