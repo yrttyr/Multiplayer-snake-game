@@ -14,28 +14,28 @@ wrappers = WeakValueDictionary()
 
 def sendto(to, senders, class_name, func_name):
     for sender in senders:
-        getattr(sender.get_obj(class_name), func_name)(_send_to=to)
+        getattr(sender.get_obj(class_name), func_name)(to=to)
 
 def send_cls(name=None, singleton=False):
-    def inner(_cls):
+    def inner(cls):
         if name is None:
-            name_local = _cls.__name__
+            name_local = cls.__name__
         else:
             name_local = name
 
-        send_meth, recv_meth = _get_methods(_cls)
+        send_meth, recv_meth = _get_methods(cls)
         for meth in send_meth:
             _replace_sendfun(meth)
         for meth in recv_meth:
             _replace_recvfun(meth)
 
         recvmeth_names = [meth.name for meth in recv_meth]
-        call_with_conn = getattr(_cls, 'call_with_conn', ())
+        call_with_conn = getattr(cls, 'call_with_conn', ())
 
-        _replace_init(_cls, name_local, recvmeth_names,
+        _replace_init(cls, name_local, recvmeth_names,
                      call_with_conn, singleton)
-        _replace_del(_cls)
-        return _cls
+        _replace_del(cls)
+        return cls
     return inner
 
 def _get_methods(cls):
@@ -43,69 +43,73 @@ def _get_methods(cls):
     recv = []
     for atr_name in cls.__dict__.keys():
         atr = getattr(cls, atr_name)
-        if hasattr(atr, '_sendmeth') and atr._sendmeth:
+        if hasattr(atr, 'sendmeth') and atr.sendmeth:
             send.append(atr)
-        elif hasattr(atr, '_recvmeth') and atr._recvmeth:
+        elif hasattr(atr, 'recvmeth') and atr.recvmeth:
             recv.append(atr)
     return send, recv
 
-def _replace_init(_cls, name, recvmeth_names,
+def _replace_init(cls, name, recvmeth_names,
                  call_with_conn, singleton):
-    _old_init = _cls.__init__
-    def _initfun(self, *args, **kwargs):
+    old_init = cls.__init__
+    def initfun(self, *args, **kwargs):
         if id(self) not in wrappers: # Защита при вызове __init__ родителя
-            _wrapper = Wrapper(self, name, recvmeth_names,
-                               call_with_conn)
-            wrappers[id(self)] = _wrapper
+            wrapper = Wrapper(self, name, recvmeth_names,
+                              call_with_conn)
+            wrappers[id(self)] = wrapper
             if singleton:
-                wrappers[name] = _wrapper
-        _old_init(self, *args, **kwargs)
-    _cls.__init__ = _initfun
+                wrappers[name] = wrapper
+        old_init(self, *args, **kwargs)
+    cls.__init__ = initfun
 
-def _replace_del(_cls):
-    _old_del = getattr(_cls, '__del__', None)
-    if _old_del:
-        def _delfun(self, *args, **kwargs):
+def _replace_del(cls):
+    old_del = getattr(cls, '__del__', None)
+    if old_del:
+        def delfun(self, *args, **kwargs):
             if id(self) in wrappers:
                 wrappers[id(self)].kill()
-            _old_del(self, *args, **kwargs)
+            old_del(self, *args, **kwargs)
     else:
-        def _delfun(self, *args, **kwargs):
+        def delfun(self, *args, **kwargs):
             if id(self) in wrappers:
                 wrappers[id(self)].kill()
-    _cls.__del__ = _delfun
+    cls.__del__ = delfun
 
-def _replace_sendfun(_fun):
-    def _sendfun(self, *args, **kwargs):
-        if '_send_to' in kwargs:
-            _send_to = kwargs['_send_to']
-            del kwargs['_send_to']
+def _replace_sendfun(fn):
+    if 'to' in fn.func_code.co_varnames:
+        raise ValueError('Функция не должна иметь аргумент to')
+    def sendfun(self, *args, **kwargs):
+        if 'to' in kwargs:
+            to = kwargs['to']
+            del kwargs['to']
         else:
-            _send_to = None
-        data = _fun(self, *args, **kwargs)
+            to = None
+        data = fn(self, *args, **kwargs)
         if not data:
             return
-        wrappers[id(self)].send((_fun.name, data), _send_to)
-    setattr(_fun.im_class, _fun.__name__, _sendfun)
+        wrappers[id(self)].send((fn.name, data), to)
+    setattr(fn.im_class, fn.__name__, sendfun)
 
-def _replace_recvfun(_fun):
-    def _recvfun(self, *args, **kwargs):
-        return _fun(self, *args, **kwargs)
-    setattr(_fun.im_class, _fun.__name__, _recvfun)
+def _replace_recvfun(fn):
+    def recvfun(self, *args, **kwargs):
+        return fn(self, *args, **kwargs)
+    setattr(fn.im_class, fn.__name__, recvfun)
 
 def send_meth(name):
-    def inner(_meth):
-        _meth._sendmeth = True
-        _meth.name = name
-        return _meth
+    def inner(meth):
+        meth.sendmeth = True
+        meth.name = name
+        return meth
     return inner
 
 def send_fun(name):
     def inner(fn):
-        def _sendfun(self, *args, **kwargs):
-            if '_send_to' in kwargs:
-                sendto = kwargs['_send_to']
-                del kwargs['_send_to']
+        if 'to' in fn.func_code.co_varnames:
+            raise ValueError('Функция не должна иметь аргумент to')
+        def sendfun(self, *args, **kwargs):
+            if 'to' in kwargs:
+                sendto = kwargs['to']
+                del kwargs['to']
             else:
                 raise
             data = fn(self, *args, **kwargs)
@@ -122,21 +126,21 @@ def send_fun(name):
 
             for sub in sendto:
                 sub.send(data)
-        return _sendfun
+        return sendfun
+    return inner
+
+def recv_meth(name=False):
+    def inner(meth):
+        meth.recvmeth = True
+        if name:
+            meth.name = name
+        else:
+            meth.name = meth.__name__
+        return meth
     return inner
 
 def packager(data):
     return json.dumps(data, separators=(',', ':'))
-
-def recv_meth(name=False):
-    def inner(_meth):
-        _meth._recvmeth = True
-        if name:
-            _meth.name = name
-        else:
-            _meth.name = _meth.__name__
-        return _meth
-    return inner
 
 class Wrapper(object):
     _keeper = set()
@@ -166,7 +170,7 @@ class Wrapper(object):
     def subscribe(self, sub):
         self.subscribers.add(sub)
         for meth_name in self.call_with_conn:
-            getattr(self.obj, meth_name)(_send_to=[sub])
+            getattr(self.obj, meth_name)(to=sub)
 
         if self.subscribers:
             self.keep_obj = self.obj

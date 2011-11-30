@@ -56,7 +56,7 @@ class Scores(object):
     def send(fn):
         def iner(self, *args, **kwars):
             fn(self, *args, **kwars)
-            self.send_score(_send_to=self.game)
+            self.send_score(to=self.game)
         return iner
 
     @sender.send_fun('scores')

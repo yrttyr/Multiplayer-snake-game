@@ -150,6 +150,10 @@ class TestSend(unittest.TestCase):
             def data_4(self):
                 return 'info_4'
 
+            @sender.send_meth('test_send_4')
+            def data_4(self):
+                return 'info_4'
+
         @sender.send_cls()
         class Cn(object):
             call_with_conn = ()
@@ -201,9 +205,9 @@ class TestSend(unittest.TestCase):
         self.subscriber1.subscribe(self.c)
         self.subscriber2.subscribe(self.c)
 
-        self.c.data_2(_send_to=self.connect1)
-        self.c.data_1(_send_to=self.connect2)
-        self.c.data_3(_send_to=[self.connect2, self.connect1])
+        self.c.data_2(to=self.connect1)
+        self.c.data_1(to=self.connect2)
+        self.c.data_3(to=[self.connect2, self.connect1])
 
         self.assertEqual(self.connect1.data, [
                          '["test_send_1","info_1"]',
@@ -221,7 +225,7 @@ class TestSend(unittest.TestCase):
         self.subscriber2.subscribe(self.c)
         self.subscriber1.subscribe(self.cn)
 
-        self.cn.send_data(_send_to='C')
+        self.cn.send_data(to='C')
 
         self.assertEqual(self.connect1.data, [
                          '["test_send_1","info_1"]',
@@ -232,7 +236,17 @@ class TestSend(unittest.TestCase):
                          '["test_send_4","info_4"]',
                          '["test_send_Cn","info_Cn"]'])
 
-        self.assertRaises(sender.SendtoError, self.c.data_1, _send_to='C')
+        self.assertRaises(sender.SendtoError, self.c.data_1, to='C')
+
+    def test_sendto_error(self):
+        class C(object):
+            call_with_conn = ()
+
+            @sender.send_meth('test_send_C')
+            def send_data(self, to):
+                return 'info_C'
+
+        self.assertRaises(ValueError, sender.send_cls(), C)
 
 class TestCreateWrapper(unittest.TestCase):
     def setUp(self):

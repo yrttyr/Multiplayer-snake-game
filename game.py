@@ -44,7 +44,7 @@ class GamesList(list):
         for s in sub['Game']:
             scores = s.get_obj('Player').scores
             if scores:
-                scores.send_score(_send_to=sub)
+                scores.send_score(to=sub)
 
     @sender.send_meth('gamelist')
     def send_all_games(self):
