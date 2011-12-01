@@ -27,6 +27,7 @@ class GamesList(list):
         map_ = MapEditor(self)
         self.append(map_)
         sub.subscribe(map_)
+        sub.get_obj('Player').setdata(map_)
 
     @sender.recv_meth()
     def create_game(self, sub, key):
@@ -77,7 +78,16 @@ class AbstractGame(object):
     def __init__(self, cont):
         self.cont = cont
         self.objects = []
-        self.map_edit = False
+        self._status = None
+
+    @property
+    def status(self):
+        return self._status
+
+    @status.setter
+    def status(self, value):
+        self._status = value
+        self.send_status()
 
     def load_map(self, name):
         with open('maps/' + name) as f:
@@ -102,10 +112,14 @@ class AbstractGame(object):
         self.send_drawdata(obj)
         return obj
 
-    @sender.send_meth('gameinfo')
-    def send_gameinfo(self):
+    @sender.send_meth('game_status')
+    def send_status(self):
+        return self.status
+
+    @sender.send_meth('mapdata')
+    def send_mapdata(self):
         return self.gamemap.x, self.gamemap.y, \
-               self.gamemap.get_layers_data(), self.map_edit
+               self.gamemap.get_layers_data()
 
     @sender.send_meth('allcoord')
     def send_all_coord(self):
@@ -125,8 +139,8 @@ class AbstractGame(object):
 
 @sender.send_cls()
 class Game(AbstractGame):
-    call_with_conn = 'send_gameinfo', 'send_all_drawdata', \
-                     'send_all_coord'
+    call_with_conn = 'send_mapdata', 'send_all_drawdata', \
+                     'send_all_coord', 'send_status'
 
     def __init__(self, cont, map_key):
         super(Game, self).__init__(cont)
@@ -137,6 +151,8 @@ class Game(AbstractGame):
         self.snake_color = [(255, 0, 0), (0, 255, 0), (0, 0, 255),
                             (255, 255, 0), (255, 0, 255), (0, 255, 255)]
         self.add_object('Rabbit')
+        self.status = 'play'
+
         self.greenlet = spawn(self.step)
 
     def add_snake(self, coord, direct):
@@ -163,13 +179,15 @@ class Game(AbstractGame):
 
 @sender.send_cls('Game')
 class MapEditor(AbstractGame):
-    call_with_conn = 'send_gameinfo', 'send_all_drawdata', 'send_all_coord'
+    call_with_conn = 'send_mapdata', 'send_all_drawdata', \
+                     'send_all_coord', 'send_status'
 
     def __init__(self, cont, map_key=None):
         super(MapEditor, self).__init__(cont)
-        self.map_edit = True
+
         if map_key is None:
             self.load_map('.empty')
+        self.status = 'map_editor'
 
     @sender.recv_meth()
     def save_map(self, sub, data):

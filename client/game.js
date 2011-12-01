@@ -3,22 +3,64 @@
 var needDraw_fill = function(X, Y) {
     for (var x = 0; x <= X - 1; x++) {
         for (var y = 0; y <= Y - 1; y++) {
-            game.needDraw.push([x, y]);
+            gamemap_cont.needDraw.push([x, y]);
         }
     }
 };
+
+function GamemapContainer(layers) {
+    this.canvas = document.getElementById('canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.needDraw = [];
+
+    window.gamemap = {};
+    for(var name in layers) {
+        gamemap[name] = new Gamemap(layers[name]);
+    }
+
+    this.setSize = function(x, y) {
+        this.SizeX = x;
+        this.SizeY = y;
+        this.refreshCanvas();
+    };
+
+    this.setSizeX = function(x) {
+        this.SizeX = x || parseInt(document.getElementById('Size_X').value);
+        this.refreshCanvas();
+        needDraw_fill(gamemap_cont.SizeX, gamemap_cont.SizeY);
+    };
+
+    this.setSizeY = function(y) {
+        this.SizeY = y || parseInt(document.getElementById('Size_Y').value);
+        this.refreshCanvas();
+        needDraw_fill(gamemap_cont.SizeX, gamemap_cont.SizeY);
+    };
+
+    this.refreshCanvas = function(x, y) {
+        document.getElementById('Size_X').value = this.SizeX;
+        document.getElementById('Size_Y').value = this.SizeY;
+        this.canvas.width = this.SizeX * CELLSIZE;
+        this.canvas.height = this.SizeY * CELLSIZE;
+        this.canvas.style.display = 'block';
+    };
+
+    this.addObject = function(indef, coord, info) {
+        var gamemap_name = game.objects[indef].gamemap;
+        gamemap[gamemap_name].set(coord, indef, info);
+    };
+}
 
 function Gamemap(default_obj_id) {
     this.dict = {};
     this.default_obj_id = default_obj_id;
     this.set = function(k, x, type) {
         this.dict[k] = {'indef': x, 'type': type || ''};
-        game.needDraw.push(k);
+        gamemap_cont.needDraw.push(k);
     },
     this.setType = function(k, x) {
         if(k in this.dict) {
             this.dict[k].type = x;
-            game.needDraw.push(k);
+            gamemap_cont.needDraw.push(k);
         }
         else {
             console.error('Cell empty', k);
@@ -44,7 +86,6 @@ function Gamemap(default_obj_id) {
             coord = [parseInt(coord[0]), parseInt(coord[1])];
             if(coord[0] < 0 || coord[0] >= game.SizeX ||
                coord[1] < 0 || coord[1] >= game.SizeY) {
-                   console.error(coord);
                     continue;
             }
             data.push([indef, coord]);
@@ -85,11 +126,7 @@ function Scores() {
         }
     };
     this.clear = function() {
-        if(this.div.hasChildNodes()) {
-            while (this.div.childNodes.length >= 1) {
-                this.div.removeChild(this.div.firstChild);
-            }
-        }
+        clearDiv(this.div);
     };
 };
 
@@ -101,43 +138,11 @@ function createGame() {
 
 function Game(layer_info) {
     this.canvas = document.getElementById('canvas');
-    this.canvas.onmousedown = canvasKeyDown;
     this.ctx = this.canvas.getContext('2d');
-
     this.objects = {};
-    this.needDraw = [];
 
-    this.gamemap = {};
-    for(var name in layer_info) {
-        this.gamemap[name] = new Gamemap(layer_info[name]);
-    }
-
-    this.setSize = function(x, y) {
-        this.SizeX = x;
-        this.SizeY = y;
-        this.refreshCanvas();
-    };
-
-    this.setSizeX = function(x) {
-        this.SizeX = x || parseInt(document.getElementById('Size_X').value);
-        this.refreshCanvas();
-    };
-
-    this.setSizeY = function(y) {
-        this.SizeY = y || parseInt(document.getElementById('Size_Y').value);
-        this.refreshCanvas();
-    };
-
-    this.refreshCanvas = function(x, y) {
-        document.getElementById('Size_X').value = this.SizeX;
-        document.getElementById('Size_Y').value = this.SizeY;
-        this.canvas.width = this.SizeX * CELLSIZE;
-        this.canvas.height = this.SizeY * CELLSIZE;
-        this.canvas.style.display = 'block';
-        needDraw_fill(this.SizeX, this.SizeY);
-    };
 ///////////Game Editor
-    this.disableMapEditor = function() {
+    this.initGame = function() {
         this.mapEdit = false;
         document.getElementById('etitorTools').style.display = 'none';
         document.getElementById('games').style.display = 'block';
@@ -147,7 +152,13 @@ function Game(layer_info) {
         document.getElementById('etitorTools').style.display = 'block';
         document.getElementById('games').style.display = 'none';
         this.base_div = document.getElementById('base_layer');
+        clearDiv(this.base_div);
         this.ground_div = document.getElementById('ground_layer');
+        clearDiv(this.ground_div);
+
+        for(var indef in this.objects) {
+            this.mapEditorAddButton(this.objects[indef], indef);
+        }
     };
     this.mapEditorAddButton = function(obj, indef) {
         var src = obj.getSRC();
@@ -164,49 +175,41 @@ function Game(layer_info) {
         this.selectElement = num;
     };
     this.saveMap = function() {
-        var base = game.gamemap['base'].getListIdAndCoord();
-        var ground = game.gamemap['ground'].getListIdAndCoord();
+        var base = gamemap['base'].getListIdAndCoord();
+        var ground = gamemap['ground'].getListIdAndCoord();
         var data = {'objects': base.concat(ground)};
-        data['SizeX'] = game.SizeX;
-        data['SizeY'] = game.SizeY;
+        data['SizeX'] = gamemap_cont.SizeX;
+        data['SizeY'] = gamemap_cont.SizeY;
         connect.sendData(['save_map', data]);
     };
 ////////////
-    this.addObjectInMap = function(indef, coord, info) {
-        var gamemap_name = game.objects[indef].gamemap;
-        game.gamemap[gamemap_name].set(coord, indef, info);
-    };
 
     this.drawAll = function() {
-        for(var key in game.needDraw) {
-            var coord = game.needDraw[key];
-            var ground = this.gamemap['ground'].get(coord);
-            var base = this.gamemap['base'].get(coord);
+        for(var key in gamemap_cont.needDraw) {
+            var coord = gamemap_cont.needDraw[key];
+            var ground = gamemap['ground'].get(coord);
+            var base = gamemap['base'].get(coord);
 
             var ground_obj = this.objects[ground.indef];
-            // Иногда объекты к новой карте не успевают загрузиться
-            // Возможно плохое решение и может приводить к большой нагрузке,
-            // если объекты долго не смогут загрузиться
-            if(ground_obj) {
-                ground_obj.draw(coord[0], coord[1], ground.type);
-            }
+            ground_obj.draw(coord[0], coord[1], ground.type);
 
             var base_obj = this.objects[base.indef];
-            // И здесь
-            if(base_obj) {
-                base_obj.draw(coord[0], coord[1], base.type);
-            }
+            base_obj.draw(coord[0], coord[1], base.type);
 
-            game.needDraw.splice(key, 1);
+            gamemap_cont.needDraw.splice(key, 1);
         }
     };
 
     this.updateDrawdata = function(data) {
         this.objects[data['indef']] = new objectTypes[data['drawtype']](data);
         this.objects[data['indef']].gamemap = data['map_layer']
-
-        if(game.mapEdit) {
-            game.mapEditorAddButton(this.objects[data['indef']], data['indef']);
-        }
     };
+}
+
+function clearDiv(div) {
+    if(div.hasChildNodes()) {
+        while (div.childNodes.length >= 1) {
+            div.removeChild(div.firstChild);
+        }
+    }
 }

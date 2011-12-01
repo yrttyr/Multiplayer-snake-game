@@ -34,14 +34,8 @@ function switch_parse(data) {
                 for(var key in cells) {
                     var coord = cells[key][0];
                     var info = cells[key][1] || '';
-                    game.addObjectInMap(indef, coord, info);
+                    gamemap_cont.addObject(indef, coord, info);
                 }
-            })
-            break
-
-        case 'drawdata':
-            data[1].forEach(function(value) {
-                game.updateDrawdata(value);
             })
             break
 
@@ -50,7 +44,13 @@ function switch_parse(data) {
                 var indef = value[0];
                 var coord = value[1];
                 var info = value[2] || '';
-                game.addObjectInMap(indef, coord, info);
+                gamemap_cont.addObject(indef, coord, info);
+            })
+            break
+
+        case 'drawdata':
+            data[1].forEach(function(value) {
+                game.updateDrawdata(value);
             })
             break
 
@@ -75,16 +75,29 @@ function switch_parse(data) {
             }
             break
 
-        case 'gameinfo':
-            window.game = new Game(data[1][2]);
+        case 'game_status':
+            switch(data[1]) {
+                case 'play':
+                    game.initGame();
+                    needDraw_fill(gamemap_cont.SizeX, gamemap_cont.SizeY);
+                    break
+
+                case 'map_editor':
+                    game.initMapEditor();
+                    needDraw_fill(gamemap_cont.SizeX, gamemap_cont.SizeY);
+                    break
+
+                default:
+                    console.error('неизвестный статус');
+            }
+            break
+
+        case 'mapdata':
+            window.game = new Game();
             scores.clear();
-            game.setSize(data[1][0], data[1][1]);
-            if(data[1][3]) {
-                game.initMapEditor();
-            }
-            else {
-                game.disableMapEditor();
-            }
+
+            window.gamemap_cont = new GamemapContainer(data[1][2]);
+            gamemap_cont.setSize(data[1][0], data[1][1]);
             break
 
         case 'mapslist':

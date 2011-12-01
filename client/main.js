@@ -20,11 +20,13 @@ function init(images) {
 
     window.images = images;
     window.game = new Game();
+    window.gamemap_cont = new GamemapContainer();
 
     window.CELLSIZE = 20;
 
     create_connect();
-    setEvent();
+    setEvents();
+
     requestAnimationFrame(update, game.canvas);
 }
 

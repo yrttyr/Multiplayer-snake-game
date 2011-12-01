@@ -15,13 +15,15 @@
 <canvas id="canvas"></canvas>
 
 <div id='etitorTools'>
-    X<input type='text' id='Size_X' pattern='^[ 0-9]+$' onchange="game.setSizeX();" size=4>
-    Y<input type='text' id='Size_Y' pattern='^[ 0-9]+$' onchange="game.setSizeY();" size=4>
+    X<input type='text' id='Size_X' pattern='^[ 0-9]+$' onchange="gamemap_cont.setSizeX();" size=4>
+    Y<input type='text' id='Size_Y' pattern='^[ 0-9]+$' onchange="gamemap_cont.setSizeY();" size=4>
     <br>
-        <div id='base_layer' style="overflow:auto;">Базовый слой</div>
-        <div id='ground_layer' style="overflow:auto;">Земляной слой</div>
+        Базовый слой
+        <div id='base_layer' style="overflow:auto;"></div>
+        Земляной слой
+        <div id='ground_layer' style="overflow:auto;"></div>
     <a href="" onclick="game.saveMap(); return false";>Сохранить карту</a>
-    <a href="" onclick="game.disableMapEditor(); return false";>Выйти из редактора</a>
+    <a href="" onclick="game.initGame(); return false";>Выйти из редактора</a>
 </div>
 
 <div id='scores_tab'>
