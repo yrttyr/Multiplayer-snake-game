@@ -150,7 +150,7 @@ class Wrapper(object):
         self.group_name = group_name
         self.recvmeth_names = recvmeth_names
         self.call_with_conn = call_with_conn
-        self.subscribers = WeakSet()
+        self.subscribers = set()
         self._keeper.add(self)
 
     @property
@@ -165,6 +165,9 @@ class Wrapper(object):
             yield i
 
     def kill(self):
+        for sub in self:
+            del sub.wrappers[type(self.obj).__name__]
+            self.unsubscribe(sub)
         self._keeper.remove(self)
 
     def subscribe(self, sub):
@@ -247,10 +250,10 @@ class Subscriber(object):
         try:
             self.connect.send(data)
         except EnvironmentError as e:
-            self.connect.subscriber = None
-            print 'end error'
+            self.kill()
 
-    def __del__(self):
+    def kill(self):
+        self.connect.subscriber = None
         for obj in self.wrappers.values():
             obj.unsubscribe()
 
