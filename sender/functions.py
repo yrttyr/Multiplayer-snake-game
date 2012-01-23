@@ -68,7 +68,6 @@ def _sendwrap(fn):
         if fn._sender['sendname'] == 'init': #убрать этот костыль
             def get_data(_cache=[]):
                 if not _cache:
-                    #print self, args, kwargs
                     data = fn(self, *args, **kwargs)
                     _cache.append((self, type(self), data))
                 return _cache[0]

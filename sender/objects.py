@@ -45,21 +45,11 @@ class SendList(set):
     def unsubscribe(self, sub):
         pass
 
-
-#params['list_attrs'] = _getmeths_names(cls,
-#    lambda atr: isinstance(atr, sender.objects.SendList))
-
 import functions
 
 def attrs_replace(cls, params):
-    #attrs = tuple(getmeth_by_name(cls, params['list_attrs']))
-    #if len(attrs):
-    #    _attr_initwrap(cls, attrs)
-
     sendlist_instances = [value for value in cls.__dict__.values()
                           if isinstance(value, SendList)]
-
-    print 'sendlist_instances', sendlist_instances
 
     if not sendlist_instances:
         return
