@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from gevent import sleep, spawn
+import sender
 
 import server
-import game
-
 server.start()

@@ -5,9 +5,16 @@ from multiprocessing import Process
 
 from gevent import sleep, getcurrent
 from ws4py.server.geventserver import WebSocketServer
+from ws4py.server.wsgi.middleware import WebSocketHandler
 
-import sender
+def send(self, data):
+    data = protocol.encode(data)
+    super(WebSocketHandler, self).send(data)
+WebSocketHandler.send = send
+
 import player
+from sender import protocol
+from sender.base import Subscriber
 
 def http_server():
     import SimpleHTTPServer
@@ -38,12 +45,13 @@ def websocket_app(ws, t):
     while True:
         data = ws.receive()
         if data:
-            ws.subscriber.recv(data)
+            fn, args = protocol.decode(ws.subscriber, data)
+            fn(ws.subscriber, *args)
         else:
             ws.subscriber = None
             break
 
-class Subscriber(sender.Subscriber):
+class Subscriber(Subscriber):
     def call(self):
         self.subscribe('GamesList')
         self.subscribe('MapsList')

@@ -15,7 +15,7 @@ window.onload = function() {
 };
 
 function init(images) {
-    window.gamelist = new GameList();
+    //window.gamelist = new GameList();
     window.scores = new Scores();
 
     window.images = images;

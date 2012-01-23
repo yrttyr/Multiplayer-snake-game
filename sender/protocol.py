@@ -4,6 +4,7 @@
 import json
 
 def encode(data):
+    print data
     return json.dumps(data, separators=(',', ':'),
                        default=obj_to_indef)
 
@@ -20,7 +21,6 @@ def decode(sub, data):
     data = json.loads(data, object_hook=get_parse(sub))
 
     obj, fun_name, args = data[0], data[1], data[2:]
-    print fun_name, args
     meth = getattr(obj, fun_name)
     return meth, args
 

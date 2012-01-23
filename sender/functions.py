@@ -3,7 +3,7 @@
 
 from functools import wraps
 
-from sender import get_wrapper
+from public import get_wrapper
 
 def set_base_params(cls, params):
     if params['name'] is None:
@@ -24,10 +24,6 @@ def set_base_params(cls, params):
                 'sendmeth': True,
                 'sendname': 'init'
             }
-
-    import sender.objects
-    params['list_attrs'] = _getmeths_names(cls,
-        lambda atr: isinstance(atr, sender.objects.SendList))
 
 def _getmeths_names(cls, filter_):
     names = []
@@ -72,12 +68,15 @@ def _sendwrap(fn):
         if fn._sender['sendname'] == 'init': #убрать этот костыль
             def get_data(_cache=[]):
                 if not _cache:
-                    _cache.append((self, type(self), fn(self, *args, **kwargs)))
+                    #print self, args, kwargs
+                    data = fn(self, *args, **kwargs)
+                    _cache.append((self, type(self), data))
                 return _cache[0]
         else:
             def get_data(_cache=[]):
                 if not _cache:
-                    _cache.append((self, fn, fn(self, *args, **kwargs)))
+                    data = fn(self, *args, **kwargs)
+                    _cache.append((self, fn, data))
                 return _cache[0]
         for sub in to:
             sub.send(get_data)
@@ -121,39 +120,6 @@ def _recvwrap(fn):
         return fn(self, *args, **kwargs)
     setattr(fn.im_class, fn.__name__, wrapper)
 
-def attrs_replace(cls, params):
-    attrs = tuple(getmeth_by_name(cls, params['list_attrs']))
-    if len(attrs):
-        _attr_initwrap(cls, attrs)
-
-    for attr in attrs:
-        for name in attr.param_names:
-            _attr_replace(cls, attr, name)
-
-def _attr_initwrap(cls, sendobjs):
-    old_init = cls.__init__
-    def initfun(self, *args, **kwargs):
-        old_init(self, *args, **kwargs)
-        for obj in sendobjs:
-            obj.add(self)
-    cls.__init__ = initfun
-
-def _attr_replace(cls, sendobj, name):
-    hidden_name = '_%s' % name
-
-    def getx(self):
-        return getattr(self, hidden_name)
-
-    def setx(self, val):
-        setattr(self, hidden_name, val)
-        sendobj.change(self, name, val)
-
-    def delx(self):
-        delattr(self, hidden_name)
-        sendobj.change(self, name, None)
-
-    setattr(cls, name, property(getx, setx, delx))
-
 import gevent
 
 def send_once(cls, params):
@@ -184,3 +150,8 @@ def _send_once_wrap(fn):
         data['greenlet'] = gevent.spawn(send_and_del, data)
         sendto[args] = data
     setattr(fn.im_class, fn.__name__, wrapper)
+
+
+from base import wrapper_functions
+wrapper_functions.extend((set_base_params, initfunwrapper, delfunwrapper,
+    recvfunwrapper, sendfunwrapper))

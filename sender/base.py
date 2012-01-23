@@ -3,7 +3,9 @@
 
 from weakref import WeakValueDictionary, ref
 
-import sender
+from public import get_wrapper
+
+wrapper_functions = []
 
 class Link(object):
     keeper = set()
@@ -42,12 +44,14 @@ class Subscriber(Link):
         self.call()
 
     def subscribe(self, obj):
-        obj = sender.get_wrapper(obj)
+        obj = get_wrapper(obj)
         if obj not in self:
             self._subscribe(obj)
             obj._subscribe(self)
+        return obj
 
     def unsubscribe(self, obj):
+        obj = get_wrapper(obj)
         if obj in self:
             self._unsubscribe(obj)
             obj._unsubscribe(self)
@@ -95,29 +99,30 @@ class Wrapper(Link):
     def _subscribe(self, obj):
         super(Wrapper, self)._subscribe(obj)
         obj[id(self.obj)] = self.obj
-        getattr(self.obj, 'init', lambda _, to: None)(to=obj)
-        getattr(self.obj, 'subscribe', lambda _, a: None)(obj)
+        getattr(self.obj, 'init', lambda to: None)(to=obj)
+        getattr(self.obj, 'subscribe', lambda _: None)(obj)
 
         if self:
             self.keep_obj = self.obj
 
     def _unsubscribe(self, obj):
         super(Wrapper, self)._unsubscribe(obj)
-        getattr(self.obj, 'unsubscribe', lambda _, a: None)(obj)
+        getattr(self.obj, 'unsubscribe', lambda _: None)(obj)
 
         if self:
             self.keep_obj = self.obj
 
     def __del__(self):
-        print 'wrapper del'
+        print 'self', self, self.obj
+        print 'wrapper del', type(self.obj).__name__
 
 class WrapperSingletonMeta(WrapperMeta):
-    def __call__(cls, obj, *args, **kwargs):
-        name = type(obj).__name__
+    def __call__(cls, wraped_class, *args, **kwargs):
+        name = type(wraped_class).__name__
         if name in cls._dict:
             return cls._dict[name]
         sc = super(WrapperSingletonMeta, cls)
-        instance = sc.__call__(obj, *args, **kwargs)
+        instance = sc.__call__(wraped_class, *args, **kwargs)
         cls._dict[name] = instance
         return instance
 
@@ -126,7 +131,7 @@ class WrapperSingleton(Wrapper):
 
     def _subscribe(self, obj):
         super(WrapperSingleton, self)._subscribe(obj)
-        obj[type(self.obj).__name__] = self
+        obj[type(self.obj).__name__] = self.obj
 
 class WrapperUnique(Wrapper):
     def _subscribe(self, sub):
@@ -134,5 +139,5 @@ class WrapperUnique(Wrapper):
         name = type(self.obj).__name__
         if name in sub._dict:
             sub.unsubscribe(sub[name])
-        sub[name] = self
+        sub[name] = self.obj
 

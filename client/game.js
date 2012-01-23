@@ -94,8 +94,46 @@ function Gamemap(default_obj_id) {
     };
 };
 
-function GameList() {
+function GamesList() {
     this.div = document.getElementById('games');
+    this.maplist = document.getElementById('mapslist');
+
+    var button = document.createElement('input');
+    button.type = 'button';
+    button.value = 'Создать игру';
+    button.onclick = function(self) {
+        function f(e) {
+            if(self.maplist.value != '') {
+                connect.sendData([self, 'create_game', self.maplist.value]);
+            }
+        }
+        return f
+    }(this);
+    this.div.appendChild(button);
+
+    var button = document.createElement('input');
+    button.type = 'button';
+    button.value = 'Редактор карт';
+    button.onclick = function(self) {
+        function f(e) {
+            if(self.input.value != '') {
+                connect.sendData([self, 'create_map', self.input.value]);
+                self.input.value = '';
+            }
+        }
+        return f
+    }(this);
+    this.div.appendChild(button);
+
+    var title = document.createElement('div');
+    title.innerHTML = 'Список игр';
+    this.div.appendChild(title);
+
+    this.addList = function(list) {
+        for(var el in list) {
+            this.add(list[el[0]], list[el[1]], list[el[2]]);
+        }
+    }
     this.add = function(indef, sizeX, sizeY) {
         var el = document.getElementById(indef);
         if(!el) {
@@ -106,6 +144,18 @@ function GameList() {
         el.innerHTML = '<a href="" onclick="connect.sendData([\'connect_game\',' + indef + ']); return false";>' + indef + '</a>';
     }
 };
+function MapsList() {
+    this.div = document.getElementById('mapslist');
+    this.addList = function(list) {
+        for(var el in list) {
+            this.add(list[el]);
+        }
+    }
+    this.add = function(mapname) {
+        var len = this.div.options.length;
+        this.div.options[len] = new Option(mapname, mapname);
+    }
+}
 
 function Scores() {
     this.div = document.getElementById('scoreslist');
@@ -130,11 +180,11 @@ function Scores() {
     };
 };
 
-function createGame() {
+/*function createGame() {
     var ml = document.getElementById('mapslist');
     var value = ml.options[ml.selectedIndex].value;
     connect.sendData(['create_game', parseInt(value)]);
-}
+}*/
 
 function Game(layer_info) {
     this.canvas = document.getElementById('canvas');

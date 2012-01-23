@@ -45,10 +45,59 @@ class SendList(set):
     def unsubscribe(self, sub):
         pass
 
-def init():
-    global SendList
-    from sender import functions, base_fl
 
-    funlist = base_fl + (functions.send_once, functions.sendtofunwrapper)
-    SendList = sender.send_cls(funlist=funlist)(SendList)
+#params['list_attrs'] = _getmeths_names(cls,
+#    lambda atr: isinstance(atr, sender.objects.SendList))
 
+import functions
+
+def attrs_replace(cls, params):
+    #attrs = tuple(getmeth_by_name(cls, params['list_attrs']))
+    #if len(attrs):
+    #    _attr_initwrap(cls, attrs)
+
+    sendlist_instances = [value for value in cls.__dict__.values()
+                          if isinstance(value, SendList)]
+
+    print 'sendlist_instances', sendlist_instances
+
+    if not sendlist_instances:
+        return
+
+    _attr_initwrap(cls, sendlist_instances)
+
+    for sendlist in sendlist_instances:
+        for name in sendlist.param_names:
+            _attr_replace(cls, sendlist, name)
+
+def _attr_initwrap(cls, sendobjs):
+    old_init = cls.__init__
+    def initfun(self, *args, **kwargs):
+        old_init(self, *args, **kwargs)
+        for obj in sendobjs:
+            obj.add(self)
+    cls.__init__ = initfun
+
+def _attr_replace(cls, sendobj, name):
+    hidden_name = '_%s' % name
+
+    def getx(self):
+        return getattr(self, hidden_name)
+
+    def setx(self, val):
+        setattr(self, hidden_name, val)
+        sendobj.change(self, name, val)
+
+    def delx(self):
+        delattr(self, hidden_name)
+        sendobj.change(self, name, None)
+
+    setattr(cls, name, property(getx, setx, delx))
+
+from base import wrapper_functions
+
+funlist = list(wrapper_functions) + [functions.send_once,
+                                     functions.sendtofunwrapper]
+
+SendList = sender.send_cls(funlist=funlist)(SendList)
+wrapper_functions.extend((attrs_replace, functions.sendtofunwrapper))

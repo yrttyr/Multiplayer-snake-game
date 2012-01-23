@@ -3,13 +3,16 @@
 
 from weakref import ref
 
-import sender
+from sender import public
+from sender.base import WrapperUnique
 
 from game import MaxplayerError
 
-@sender.send_cls()
+@public.send_cls(wrapper=WrapperUnique)
 class Player(object):
     tmp = 87, 68, 83, 65
+
+    def __init__(self):pass
 
     def setdata(self, game):
         self.clear()
@@ -22,13 +25,13 @@ class Player(object):
         if hasattr(self, 'snake') and self.snake:
             self.game.remove_snake(self.snake)
 
-    @sender.recv_meth()
+    @public.recv_meth()
     def set_start_coord(self, sub, x, y):
         select_mapobj = self.game.gamemap['ground'][(x, y)].obj
         if getattr(select_mapobj, 'start_pos', False):
             self.start_coord = x, y
 
-    @sender.recv_meth()
+    @public.recv_meth()
     def set_rotate(self, sub, keycode):
         print 'set_rotate', keycode
         try:
@@ -59,7 +62,7 @@ class Scores(object):
             self.send_score(to=self.game)
         return iner
 
-    @sender.send_fun('scores')
+    #@sender.send_fun('scores')
     def send_score(self):
         return self.player_id, self._val
 
