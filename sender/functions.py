@@ -18,12 +18,7 @@ def set_base_params(cls, params):
 
     if 'init' in cls.__dict__:
         init = cls.__dict__['init']
-        params['sendmeth_name'].append('init')
-        if not hasattr(init, '_sender'):
-            init._sender = {
-                'sendmeth': True,
-                'sendname': 'init'
-            }
+        send_consructor_wrap(cls, init)
 
 def _getmeths_names(cls, filter_):
     names = []
@@ -65,21 +60,13 @@ def sendfunwrapper(cls, params):
 def _sendwrap(fn):
     @wraps(fn)
     def wrapper(self, to, *args, **kwargs):
-        if fn._sender['sendname'] == 'init': #убрать этот костыль
-            def get_data(_cache=[]):
-                if not _cache:
-                    data = fn(self, *args, **kwargs)
-                    _cache.append((self, type(self), data))
-                return _cache[0]
-        else:
-            def get_data(_cache=[]):
-                if not _cache:
-                    data = fn(self, *args, **kwargs)
-                    _cache.append((self, fn, data))
-                return _cache[0]
+        def get_data(_cache=[]):
+            if not _cache:
+                data = fn(self, *args, **kwargs)
+                _cache.append((self, fn, data))
+            return _cache[0]
         for sub in to:
             sub.send(get_data)
-
     setattr(fn.im_class, fn.__name__, wrapper)
 
 def sendtofunwrapper(cls, params):
@@ -92,7 +79,6 @@ def _sendtowrap(fn, wrappers):
     @wraps(fn)
     def wrapper(self, *args, **kwargs):
         to = kwargs.pop('to', None)
-
         if to is None:
             wr = get_wrapper(self)
             to = set(get_wrapper(id(self)))
@@ -119,6 +105,17 @@ def _recvwrap(fn):
         return fn(self, *args, **kwargs)
     setattr(fn.im_class, fn.__name__, wrapper)
 
+def send_consructor_wrap(cls, fn):
+    @wraps(fn)
+    def wrapper(self, to, *args, **kwargs):
+        def get_data(_cache=[]):
+            if not _cache:
+                data = fn(self, *args, **kwargs)
+                _cache.append((self, type(self), data))
+            return _cache[0]
+        to.send(get_data)
+    setattr(cls, fn.__name__, wrapper)
+
 import gevent
 
 def send_once(cls, params):
@@ -130,10 +127,11 @@ def _send_once_wrap(fn):
     sendto = {}
     @wraps(fn)
     def wrapper(self, to, *args, **kwargs):
+        cache_key = (id(self), args)
         if args in sendto:
-            if sendto[args]['status'] != 2:
-                sendto[args]['status'] = 1
-                sendto[args]['to'] = sendto[args]['to'].union(to)
+            if sendto[cache_key]['status'] != 2:
+                sendto[cache_key]['status'] = 1
+                sendto[cache_key]['to'].update(to)
                 return
 
         def send_and_del(data):
@@ -142,12 +140,12 @@ def _send_once_wrap(fn):
                 gevent.sleep(0.1)
             data['status'] = 2
             fn(self, data['to'], *args, **kwargs)
-            if sendto[args]['greenlet'] is gevent.getcurrent():
-                del sendto[args]
+            if sendto[cache_key]['greenlet'] is gevent.getcurrent():
+                del sendto[cache_key]
         data = {'status': 1,
                 'to': to}
         data['greenlet'] = gevent.spawn(send_and_del, data)
-        sendto[args] = data
+        sendto[cache_key] = data
     setattr(fn.im_class, fn.__name__, wrapper)
 
 

@@ -7,6 +7,7 @@ from hashlib import md5
 from weakref import WeakSet
 
 from gevent import sleep, spawn
+import sender.objects
 from sender import public
 from sender.base import WrapperSingleton, WrapperUnique
 
@@ -14,61 +15,15 @@ from gamemap import GameMapContainer
 import player
 import game_objects
 
-
 class MaxplayerError(Exception):
     def __str__(self):
         return 'Достигнуто максимальное количество игроков'
 
 @public.send_cls(wrapper=WrapperSingleton)
-class GamesList(set):
-    def __init__(self):pass
-
-    def init(self):
-        return ()
-
-    def subscribe(self, sub):
-        self.send_all_games(to=sub)
-
-    @public.recv_meth()
-    def create_map(self, sub):
-        map_ = MapEditor(self)
-        self.append(map_)
-        sub.subscribe(map_)
-        sub['Player'].setdata(map_)
-
-    @public.recv_meth()
-    def create_game(self, sub, key):
-        game = Game(self, key)
-        self.add(game)
-        self.send_game(game)
-        self.connect_game(sub, game)
-
-    @public.recv_meth()
-    def connect_game(self, sub, game_id):
-        sub.subscribe(game_id)
-        game = sub['Game']
-        sub['Player'].setdata(game)
-
-        #for s in sub['Game']:
-        #    scores = s.get_obj('Player').scores
-        #    if scores:
-        #        scores.send_score(to=sub)
-
-    @public.send_meth('addList')
-    def send_all_games(self):
-        return [(id(game), ) for game in self]
-
-    @public.send_meth('addList')
-    def send_game(self, game):
-        return [[id(game)]]
-
-games_list = GamesList()
-
-@public.send_cls(wrapper=WrapperSingleton)
 class MapsList(set):
     def __init__(self):
         files = os.listdir('maps/')
-        files = [f for f in files if f[0] != '.']
+        files = [f for f in files if not f.startswith('.')]
         self.update(files)
 
     def init(self):
@@ -85,6 +40,32 @@ class MapsList(set):
         print 'ML del', self, id(self)
 
 maps_list = MapsList()
+
+@public.send_cls(wrapper=WrapperSingleton)
+class GamesList(sender.objects.SendList):
+
+    @public.recv_meth()
+    def create_map(self, sub):
+        map_ = MapEditor(self)
+        self.append(map_)
+        sub.subscribe(map_)
+        sub['Player'].setdata(map_)
+
+    @public.recv_meth()
+    def create_game(self, sub, key):
+        game = Game(self, key)
+        self.connect_game(sub, game)
+
+    @public.recv_meth()
+    def connect_game(self, sub, game_id):
+        sub.subscribe(game_id)
+        game = sub['Game']
+        sub['Player'].setdata(game)
+
+        #for s in sub['Game']:
+        #    scores = s.get_obj('Player').scores
+        #    if scores:
+        #        scores.send_score(to=sub)
 
 @public.send_cls()
 class AbstractGame(object):
@@ -155,15 +136,16 @@ class AbstractGame(object):
 
 @public.send_cls(wrapper=WrapperUnique)
 class Game(AbstractGame):
+    games_list = GamesList(('snake_count', ))
     call_with_conn = 'send_mapdata', 'send_all_drawdata', \
                      'send_all_coord', 'send_status'
 
-    def __init__(self, cont, mapname):
+    def __init__(self, cont, map_name):
         super(Game, self).__init__(cont)
 
         self.max_snake = 3
         self.snake_count = 0
-        self.load_map(mapname)
+        self.load_map(map_name)
         self.snake_color = [(255, 0, 0), (0, 255, 0), (0, 0, 255),
                             (255, 255, 0), (255, 0, 255), (0, 255, 255)]
         self.add_object('Rabbit')

@@ -129,12 +129,7 @@ function GamesList() {
     title.innerHTML = 'Список игр';
     this.div.appendChild(title);
 
-    this.addList = function(list) {
-        for(var el in list) {
-            this.add(list[el[0]], list[el[1]], list[el[2]]);
-        }
-    }
-    this.add = function(indef, sizeX, sizeY) {
+    this.set = function(indef, data) {
         var el = document.getElementById(indef);
         if(!el) {
             var el = document.createElement('div');
