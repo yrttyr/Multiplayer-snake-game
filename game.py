@@ -52,20 +52,9 @@ class GamesList(sender.objects.SendList):
         sub['Player'].setdata(map_)
 
     @public.recv_meth()
-    def create_game(self, sub, key):
-        game = Game(self, key)
-        self.connect_game(sub, game)
-
-    @public.recv_meth()
-    def connect_game(self, sub, game_id):
-        sub.subscribe(game_id)
-        game = sub['Game']
-        sub['Player'].setdata(game)
-
-        #for s in sub['Game']:
-        #    scores = s.get_obj('Player').scores
-        #    if scores:
-        #        scores.send_score(to=sub)
+    def create_game(self, sub, map_key):
+        game = Game(self, map_key)
+        self.subscribe_to(sub, game)
 
 @public.send_cls()
 class AbstractGame(object):
