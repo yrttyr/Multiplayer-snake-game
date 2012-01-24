@@ -15,13 +15,7 @@ window.onload = function() {
 };
 
 function init(images) {
-    //window.gamelist = new GameList();
-    window.scores = new Scores();
-
     window.images = images;
-    window.game = new Game();
-    window.gamemap_cont = new GamemapContainer();
-
     window.CELLSIZE = 20;
 
     create_connect();
