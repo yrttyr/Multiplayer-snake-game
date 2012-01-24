@@ -61,22 +61,11 @@ class AbstractGame(object):
     def __init__(self, cont):
         self.cont = cont
         self.objects = []
-        self._status = None
-
-    @property
-    def status(self):
-        return self._status
-
-    @status.setter
-    def status(self, value):
-        self._status = value
-        self.send_status()
 
     def subscribe(self, sub):
         self.send_mapdata(to=sub)
         self.send_all_drawdata(to=sub)
         self.send_all_coord(to=sub)
-        self.send_status(to=sub)
 
     def load_map(self, name):
         if name not in maps_list:
@@ -103,10 +92,6 @@ class AbstractGame(object):
         self.objects.append(obj)
         self.send_drawdata(obj)
         return obj
-
-    @public.send_meth('game_status')
-    def send_status(self):
-        return self.status
 
     @public.send_meth('setMapdata')
     def send_mapdata(self):
@@ -142,7 +127,6 @@ class Game(AbstractGame):
         self.snake_color = [(255, 0, 0), (0, 255, 0), (0, 0, 255),
                             (255, 255, 0), (255, 0, 255), (0, 255, 255)]
         self.add_object('Rabbit')
-        self.status = 'play'
 
         self.greenlet = spawn(self.step)
 
@@ -175,7 +159,6 @@ class MapEditor(AbstractGame):
 
         if map_key is None:
             self.load_map('.empty')
-        self.status = 'map_editor'
 
     @public.recv_meth()
     def save_map(self, sub, data):
