@@ -26,9 +26,6 @@ class MapsList(set):
         files = [f for f in files if not f.startswith('.')]
         self.update(files)
 
-    def init(self):
-        return ()
-
     def subscribe(self, sub):
         self.send_all_games(to=sub)
 
