@@ -99,7 +99,7 @@ class Wrapper(Link):
     def _subscribe(self, obj):
         super(Wrapper, self)._subscribe(obj)
         obj[id(self.obj)] = self.obj
-        getattr(self.obj, 'init', lambda to: None)(to=obj)
+        self.obj.init(to=obj)
         getattr(self.obj, 'subscribe', lambda _: None)(obj)
 
         if self:

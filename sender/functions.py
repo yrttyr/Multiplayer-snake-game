@@ -16,9 +16,8 @@ def set_base_params(cls, params):
         lambda atr: hasattr(atr, '_sender') and
         'sendmeth' in atr._sender)
 
-    if 'init' in cls.__dict__:
-        init = cls.__dict__['init']
-        send_consructor_wrap(cls, init)
+    init = cls.__dict__.get('init', lambda s: ())
+    send_consructor_wrap(cls, init)
 
 def _getmeths_names(cls, filter_):
     names = []
@@ -114,7 +113,7 @@ def send_consructor_wrap(cls, fn):
                 _cache.append((self, type(self), data))
             return _cache[0]
         to.send(get_data)
-    setattr(cls, fn.__name__, wrapper)
+    setattr(cls, 'init', wrapper)
 
 import gevent
 
