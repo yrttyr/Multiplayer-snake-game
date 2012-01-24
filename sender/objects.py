@@ -14,14 +14,12 @@ class SendList(set):
         return id(obj),
 
     @sender.recv_meth()
-    def subscribe_to(self, sub, indef):
-        wrapped = sender.get_wrapped(indef)
-        sub.subscribe(wrapped)
+    def subscribe_to(self, sub, key):
+        sub.subscribe(key)
 
     @sender.recv_meth()
-    def unsubscribe_to(self, sub, indef):
-        wr = sender.Wrapper.get(indef)
-        sub.unsubscribe(wr.obj)
+    def unsubscribe_to(self, sub, key):
+        sub.unsubscribe(key)
 
     @sender.recv_meth('del')
     def delete(self, sub, obj):
