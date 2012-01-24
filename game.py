@@ -108,24 +108,24 @@ class AbstractGame(object):
     def send_status(self):
         return self.status
 
-    @public.send_meth('mapdata')
+    @public.send_meth('setMapdata')
     def send_mapdata(self):
         return self.gamemap.x, self.gamemap.y, \
                self.gamemap.get_layers_data()
 
-    @public.send_meth('allcoord')
+    @public.send_meth('setListCoord')
     def send_all_coord(self):
-        return [obj.get_coord() for obj in self.objects]
+        return [obj.get_coord() for obj in self.objects],
 
-    @public.send_meth('coord')
+    @public.send_meth('setCoord')
     def send_change_coord(self):
         return self.gamemap.get_changed_data()
 
-    @public.send_meth('drawdata')
+    @public.send_meth('setListDrawdata')
     def send_all_drawdata(self):
-        return [obj.get_drawdata() for obj in self.objects]
+        return [obj.get_drawdata() for obj in self.objects],
 
-    @public.send_meth('drawdata')
+    @public.send_meth('setDrawdata')
     def send_drawdata(self, obj):
         return [obj.get_drawdata()]
 

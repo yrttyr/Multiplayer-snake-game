@@ -175,7 +175,8 @@ function Scores() {
     };
 };
 
-function Game(layer_info) {
+function Game() {
+    window.game = this;
     this.canvas = document.getElementById('canvas');
     this.ctx = this.canvas.getContext('2d');
     this.objects = {};
@@ -198,10 +199,32 @@ function Game(layer_info) {
             gamemap_cont.needDraw.splice(key, 1);
         }
     };
-
-    this.updateDrawdata = function(data) {
+    this.setMapdata = function(x, y, layer) {
+        window.gamemap_cont = new GamemapContainer(layer);
+        gamemap_cont.setSize(x, y);
+    };
+    this.setListDrawdata = function(list) {
+        for(var el in list) {
+            this.setDrawdata(list[el]);
+        }
+    };
+    this.setDrawdata = function(data) {
         this.objects[data['indef']] = new objectTypes[data['drawtype']](data);
         this.objects[data['indef']].gamemap = data['map_layer']
+    };
+    this.setListCoord = function(list) {
+        list.forEach(function(value) {
+            var indef = value[0];
+            var cells = value[1];
+            for(var key in cells) {
+                var coord = cells[key][0];
+                var info = cells[key][1] || '';
+                this.setCoord(indef, coord, info);
+            }
+        }, this)
+    };
+    this.setCoord = function(indef, coord, info) {
+        gamemap_cont.addObject(indef, coord, info);
     };
 }
 
