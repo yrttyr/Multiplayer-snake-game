@@ -175,18 +175,11 @@ function Scores() {
     };
 };
 
-/*function createGame() {
-    var ml = document.getElementById('mapslist');
-    var value = ml.options[ml.selectedIndex].value;
-    connect.sendData(['create_game', parseInt(value)]);
-}*/
-
 function Game(layer_info) {
     this.canvas = document.getElementById('canvas');
     this.ctx = this.canvas.getContext('2d');
     this.objects = {};
 
-    this.mapEdit = false;
     document.getElementById('etitorTools').style.display = 'none';
     document.getElementById('games').style.display = 'block';
 
