@@ -186,48 +186,9 @@ function Game(layer_info) {
     this.ctx = this.canvas.getContext('2d');
     this.objects = {};
 
-///////////Game Editor
-    this.initGame = function() {
-        this.mapEdit = false;
-        document.getElementById('etitorTools').style.display = 'none';
-        document.getElementById('games').style.display = 'block';
-    };
-    this.initMapEditor = function() {
-        this.mapEdit = true;
-        document.getElementById('etitorTools').style.display = 'block';
-        document.getElementById('games').style.display = 'none';
-        this.base_div = document.getElementById('base_layer');
-        clearDiv(this.base_div);
-        this.ground_div = document.getElementById('ground_layer');
-        clearDiv(this.ground_div);
-
-        for(var indef in this.objects) {
-            this.mapEditorAddButton(this.objects[indef], indef);
-        }
-    };
-    this.mapEditorAddButton = function(obj, indef) {
-        var src = obj.getSRC();
-        var el = document.createElement('div');
-        if(obj.gamemap == 'base') {
-            this.base_div.appendChild(el);
-        }
-        else {
-            this.ground_div.appendChild(el);
-        }
-        el.innerHTML = '<img src="'+src+'" border=1 align="left" onclick="game.setSelectElement('+indef+'); return false";/>';
-    };
-    this.setSelectElement = function(num) {
-        this.selectElement = num;
-    };
-    this.saveMap = function() {
-        var base = gamemap['base'].getListIdAndCoord();
-        var ground = gamemap['ground'].getListIdAndCoord();
-        var data = {'objects': base.concat(ground)};
-        data['SizeX'] = gamemap_cont.SizeX;
-        data['SizeY'] = gamemap_cont.SizeY;
-        connect.sendData(['save_map', data]);
-    };
-////////////
+    this.mapEdit = false;
+    document.getElementById('etitorTools').style.display = 'none';
+    document.getElementById('games').style.display = 'block';
 
     this.drawAll = function() {
         for(var key in gamemap_cont.needDraw) {
