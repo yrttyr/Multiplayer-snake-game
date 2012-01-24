@@ -72,6 +72,12 @@ class AbstractGame(object):
         self._status = value
         self.send_status()
 
+    def subscribe(self, sub):
+        self.send_mapdata(to=sub)
+        self.send_all_drawdata(to=sub)
+        self.send_all_coord(to=sub)
+        self.send_status(to=sub)
+
     def load_map(self, name):
         if name not in maps_list:
             raise 'Unknown map'
@@ -126,8 +132,6 @@ class AbstractGame(object):
 @public.send_cls(wrapper=WrapperUnique)
 class Game(AbstractGame):
     games_list = GamesList(('snake_count', ))
-    call_with_conn = 'send_mapdata', 'send_all_drawdata', \
-                     'send_all_coord', 'send_status'
 
     def __init__(self, cont, map_name):
         super(Game, self).__init__(cont)
@@ -166,9 +170,6 @@ class Game(AbstractGame):
 
 @public.send_cls(wrapper=WrapperUnique) #'Game')
 class MapEditor(AbstractGame):
-    call_with_conn = 'send_mapdata', 'send_all_drawdata', \
-                     'send_all_coord', 'send_status'
-
     def __init__(self, cont, map_key=None):
         super(MapEditor, self).__init__(cont)
 
