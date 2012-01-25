@@ -212,19 +212,21 @@ function Game() {
         this.objects[data['indef']] = new objectTypes[data['drawtype']](data);
         this.objects[data['indef']].gamemap = data['map_layer']
     };
-    this.setListCoord = function(list) {
+    this.setAllListCoord = function(list) {
         list.forEach(function(value) {
             var indef = value[0];
             var cells = value[1];
             for(var key in cells) {
                 var coord = cells[key][0];
                 var info = cells[key][1] || '';
-                this.setCoord(indef, coord, info);
+                gamemap_cont.addObject(indef, coord, info);
             }
         }, this)
     };
-    this.setCoord = function(indef, coord, info) {
-        gamemap_cont.addObject(indef, coord, info);
+    this.setListCoord = function(list) {
+        list.forEach(function(value) {
+            gamemap_cont.addObject(value[0], value[1], value[2]);
+        })
     };
 }
 

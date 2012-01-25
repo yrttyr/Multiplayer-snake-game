@@ -95,13 +95,13 @@ class AbstractGame(object):
         return self.gamemap.x, self.gamemap.y, \
                self.gamemap.get_layers_data()
 
-    @public.send_meth('setListCoord')
+    @public.send_meth('setAllListCoord')
     def send_all_coord(self):
         return [obj.get_coord() for obj in self.objects],
 
-    @public.send_meth('setCoord')
+    @public.send_meth('setListCoord')
     def send_change_coord(self):
-        return self.gamemap.get_changed_data()
+        return self.gamemap.get_changed_data(),
 
     @public.send_meth('setListDrawdata')
     def send_all_drawdata(self):
