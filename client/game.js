@@ -101,28 +101,22 @@ function GamesList() {
     var button = document.createElement('input');
     button.type = 'button';
     button.value = 'Создать игру';
-    button.onclick = function(self) {
-        function f(e) {
-            if(self.maplist.value != '') {
-                connect.sendData([self, 'create_game', self.maplist.value]);
-            }
+    button.onclick = function() {
+        if(this.maplist.value != '') {
+            connect.sendData([this, 'create_game', this.maplist.value]);
         }
-        return f
-    }(this);
+    }.bind(this);
     this.div.appendChild(button);
 
     var button = document.createElement('input');
     button.type = 'button';
     button.value = 'Редактор карт';
-    button.onclick = function(self) {
-        function f(e) {
-            if(self.input.value != '') {
-                connect.sendData([self, 'create_map', self.input.value]);
-                self.input.value = '';
-            }
+    button.onclick = function() {
+        if(this.input.value != '') {
+            connect.sendData([this, 'create_map', this.input.value]);
+            this.input.value = '';
         }
-        return f
-    }(this);
+    }.bind(this);
     this.div.appendChild(button);
 
     var title = document.createElement('div');
@@ -136,7 +130,13 @@ function GamesList() {
             el.setAttribute('id', indef);
             this.div.appendChild(el);
         }
-        el.innerHTML = '<a href="" onclick="connect.sendData([\'connect_game\',' + indef + ']); return false";>' + indef + '</a>';
+        var button = document.createElement('input');
+        button.type = 'button';
+        button.value = indef;
+        button.onclick = function() {
+            connect.sendData([this, 'subscribe_to', indef]);
+        }.bind(this);
+        el.appendChild(button);
     }
 };
 function MapsList() {
