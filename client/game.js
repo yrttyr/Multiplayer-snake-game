@@ -244,3 +244,15 @@ function clearDiv(div) {
         }
     }
 }
+function Player() {
+    // ToDo: Удалять события вместе с объектом
+    document.onkeydown = function(e) {
+        var e = window.event || e;
+        connect.sendData([this, 'set_rotate', e.keyCode]);
+    }.bind(this);
+    document.getElementById('canvas').onmousedown = function(e) {
+        var x = parseInt(e.pageX / CELLSIZE);
+        var y = parseInt(e.pageY / CELLSIZE);
+        connect.sendData([this, 'set_start_coord', x, y]);
+    }.bind(this);
+}

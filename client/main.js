@@ -19,5 +19,4 @@ function init(images) {
     window.CELLSIZE = 20;
 
     create_connect();
-    setEvents();
 }
