@@ -20,11 +20,4 @@ function init(images) {
 
     create_connect();
     setEvents();
-
-    requestAnimationFrame(update, game.canvas);
-}
-
-function update() {
-    game.drawAll();
-    requestAnimationFrame(update, game.canvas);
 }

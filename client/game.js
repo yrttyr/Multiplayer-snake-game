@@ -202,6 +202,7 @@ function Game() {
     this.setMapdata = function(x, y, layer) {
         window.gamemap_cont = new GamemapContainer(layer);
         gamemap_cont.setSize(x, y);
+        needDraw_fill(x, y);
     };
     this.setListDrawdata = function(list) {
         for(var el in list) {
@@ -222,12 +223,18 @@ function Game() {
                 gamemap_cont.addObject(indef, coord, info);
             }
         }, this)
+        requestAnimationFrame(update, game.canvas);
     };
     this.setListCoord = function(list) {
         list.forEach(function(value) {
             gamemap_cont.addObject(value[0], value[1], value[2]);
         })
     };
+}
+
+function update() {
+    game.drawAll();
+    requestAnimationFrame(update, game.canvas);
 }
 
 function clearDiv(div) {
