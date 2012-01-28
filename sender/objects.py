@@ -3,9 +3,10 @@ from weakref import WeakValueDictionary
 from functools import partial
 
 class SendList(set):
-    def __init__(self, cls):
+    def __init__(self, cls=None):
         self.change = partial(self._change)
-        auto_sub(cls, self.change)
+        if cls:
+            auto_sub(cls, self)
 
     @sender.send_meth('set')
     def send(self, obj):
@@ -28,6 +29,12 @@ class SendList(set):
     def delete(self, sub, obj):
         print 'delete', obj
         self.remove(obj)
+
+    def add(self, obj):
+        super(SendList, self).add(obj)
+        for name in getattr(obj, 'send_attrs', ()):
+            type(obj).__dict__[name].subscribe(obj, self.change)
+        self.send_delete(obj)
 
     def remove(self, obj):
         super(SendList, self).remove(obj)
@@ -57,7 +64,8 @@ class Attribute(object):
     def __set__(self, obj, value):
         setattr(obj, self.name, value)
         fn = self.callback.get(id(obj))
-        fn(obj, self.name, value)
+        if fn:
+            fn(obj, self.name, value)
 
     def __delete__(self, obj):
         delattr(obj, self.name)
@@ -65,11 +73,10 @@ class Attribute(object):
     def subscribe(self, obj, callback):
         self.callback[id(obj)] = callback
 
-def auto_sub(cls, fn):
+def auto_sub(cls, sendlist):
     old_init = cls.__init__
     def initfun(self, *args, **kwargs):
-        for name in getattr(cls, 'send_attrs', ()):
-            cls.__dict__[name].subscribe(self, fn)
+        sendlist.add(self)
         old_init(self, *args, **kwargs)
     cls.__init__ = initfun
 
