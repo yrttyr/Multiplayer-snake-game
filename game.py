@@ -114,7 +114,7 @@ class AbstractGame(object):
 
 @public.send_cls(wrapper=WrapperUnique)
 class Game(AbstractGame):
-    games_list = GamesList(('snake_count', ))
+    send_attrs = 'snake_count',
 
     def __init__(self, cont, map_name):
         super(Game, self).__init__(cont)
@@ -149,6 +149,8 @@ class Game(AbstractGame):
             if self.gamemap.changed():
                 self.send_change_coord()
             sleep(0.04)
+
+gameslist = GamesList(Game)
 
 @public.send_cls(wrapper=WrapperUnique) #'Game')
 class MapEditor(AbstractGame):

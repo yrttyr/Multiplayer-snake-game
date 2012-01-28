@@ -1,13 +1,16 @@
 import sender
+from weakref import WeakValueDictionary
+from functools import partial
 
 class SendList(set):
-    def __init__(self, param_names):
-        self.param_names = param_names
+    def __init__(self, cls):
+        self.change = partial(self._change)
+        auto_sub(cls, self.change)
 
     @sender.send_meth('set')
     def send(self, obj):
         return id(obj), [getattr(obj, name, '')
-                    for name in self.param_names]
+                    for name in obj.send_attrs]
 
     @sender.send_meth('delRow')
     def send_delete(self, obj):
@@ -30,7 +33,7 @@ class SendList(set):
         super(SendList, self).remove(obj)
         self.send_delete(obj)
 
-    def change(self, obj, name, val):
+    def _change(self, obj, name, val):
         self.send(obj)
 
     def init(self):
@@ -43,45 +46,41 @@ class SendList(set):
     def unsubscribe(self, sub):
         pass
 
-import functions
+class Attribute(object):
+    def __init__(self, name):
+        self.name = '_%s' % name
+        self.callback = WeakValueDictionary()
 
-def attrs_replace(cls, params):
-    sendlist_instances = [value for value in cls.__dict__.values()
-                          if isinstance(value, SendList)]
+    def __get__(self, obj, objtype=None):
+        return getattr(obj, self.name)
 
-    if not sendlist_instances:
-        return
+    def __set__(self, obj, value):
+        setattr(obj, self.name, value)
+        fn = self.callback.get(id(obj))
+        fn(obj, self.name, value)
 
-    _attr_initwrap(cls, sendlist_instances)
+    def __delete__(self, obj):
+        delattr(obj, self.name)
 
-    for sendlist in sendlist_instances:
-        for name in sendlist.param_names:
-            _attr_replace(cls, sendlist, name)
+    def subscribe(self, obj, callback):
+        self.callback[id(obj)] = callback
 
-def _attr_initwrap(cls, sendobjs):
+def auto_sub(cls, fn):
     old_init = cls.__init__
     def initfun(self, *args, **kwargs):
+        for name in getattr(cls, 'send_attrs', ()):
+            cls.__dict__[name].subscribe(self, fn)
         old_init(self, *args, **kwargs)
-        for obj in sendobjs:
-            obj.add(self)
     cls.__init__ = initfun
 
-def _attr_replace(cls, sendobj, name):
-    hidden_name = '_%s' % name
+def attrs_replace(cls, params):
+    for name in getattr(cls, 'send_attrs', ()):
+        _attr_replace(cls, name)
 
-    def getx(self):
-        return getattr(self, hidden_name)
+def _attr_replace(cls, name):
+    setattr(cls, name, Attribute(name))
 
-    def setx(self, val):
-        setattr(self, hidden_name, val)
-        sendobj.change(self, name, val)
-
-    def delx(self):
-        delattr(self, hidden_name)
-        sendobj.change(self, name, None)
-
-    setattr(cls, name, property(getx, setx, delx))
-
+import functions
 from base import wrapper_functions
 
 funlist = list(wrapper_functions) + [functions.send_once,
