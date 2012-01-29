@@ -68,7 +68,7 @@ class Rabbit(GameObject):
     def coll(self, coll_obj, map_object):
         self.pieces.remove(map_object)
         coll_obj.len += 5
-        coll_obj.scores.add(2)
+        coll_obj.scores(2)
         return True
 
     def step(self):
@@ -141,7 +141,7 @@ class Snake(GameObject):
 
     def coll(self, coll_obj, map_object):
         coll_obj.len -= 1
-        coll_obj.scores.sub(1)
+        coll_obj.scores(-1)
         return False
 
     def step(self):

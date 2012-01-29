@@ -53,17 +53,15 @@ class GamesList(sender.objects.SendList):
         game = Game(self, map_key)
         self.subscribe_to(sub, game)
 
+@public.send_cls(wrapper=WrapperSingleton)
+class PlayersList(sender.objects.SendList):
+    pass
+
 @public.send_cls()
 class AbstractGame(object):
     def __init__(self, cont):
         self.cont = cont
         self.objects = []
-
-    def subscribe(self, sub):
-        sub['Player'].setdata(self)
-        self.send_mapdata(to=sub)
-        self.send_all_drawdata(to=sub)
-        self.send_all_coord(to=sub)
 
     def load_map(self, name):
         if name not in maps_list:
@@ -119,6 +117,7 @@ class Game(AbstractGame):
     def __init__(self, cont, map_name):
         super(Game, self).__init__(cont)
 
+        self.players = PlayersList()
         self.max_snake = 3
         self.snake_count = 0
         self.load_map(map_name)
@@ -128,15 +127,19 @@ class Game(AbstractGame):
 
         self.greenlet = spawn(self.step)
 
-    def add_snake(self, coord, direct):
+    def subscribe(self, sub):
+        sub['Player'].setdata(self)
+        self.send_mapdata(to=sub)
+        self.send_all_drawdata(to=sub)
+        self.send_all_coord(to=sub)
+        sub.subscribe(self.players)
+
+    def add_snake(self, coord, direct, scores):
         if self.snake_count >= self.max_snake:
             raise MaxplayerError
         self.snake_count += 1
-        scores = player.Scores()
-        snake = self.add_object('Snake', coord, direct,
+        return self.add_object('Snake', coord, direct,
                                self.snake_color.pop(), scores)
-        scores.setdata(self, snake.indef)
-        return snake, scores
 
     def remove_snake(self, snake):
         self.snake_count -= 1

@@ -151,29 +151,10 @@ function MapsList() {
         this.div.options[len] = new Option(mapname, mapname);
     }
 }
-
-function Scores() {
+function PlayersList() {
     this.div = document.getElementById('scoreslist');
-    this.add = function(indef, value) {
-        var el = document.getElementById(indef);
-        if(!el) {
-            //var color = game.objects[indef].color;
-            var el = document.createElement('div');
-            el.setAttribute('id', indef);
-            this.div.appendChild(el);
-        }
-        el.innerHTML = '' + indef + ' / ' + value;
-    };
-    this.del = function(indef) {
-        var el = document.getElementById(indef);
-        if(el) {
-            this.div.removeChild(el);
-        }
-    };
-    this.clear = function() {
-        clearDiv(this.div);
-    };
-};
+    this.__proto__ = PlayersList.prototype;
+}
 
 function Game() {
     window.game = this;
@@ -237,13 +218,6 @@ function update() {
     requestAnimationFrame(update, game.canvas);
 }
 
-function clearDiv(div) {
-    if(div.hasChildNodes()) {
-        while (div.childNodes.length >= 1) {
-            div.removeChild(div.firstChild);
-        }
-    }
-}
 function Player() {
     // ToDo: Удалять события вместе с объектом
     document.onkeydown = function(e) {

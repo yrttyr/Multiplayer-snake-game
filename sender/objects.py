@@ -43,9 +43,6 @@ class SendList(set):
     def _change(self, obj, name, val):
         self.send(obj)
 
-    def init(self):
-        return self.param_names,
-
     def subscribe(self, sub):
         for obj in self:
             self.send(obj, to=sub)
