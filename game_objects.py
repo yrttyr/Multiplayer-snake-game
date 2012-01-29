@@ -91,25 +91,28 @@ class Wall(GameObject):
         return False
 
 class StartPosition(GameObject):
+    start_pos = True
+
     def __init__(self, gamemap, coord):
         self.map_layer = 'ground'
         super(StartPosition, self).__init__(gamemap, coord)
-        self.start_pos = True
         self.drawdata['image'] = 'start_position'
 
 class Snake(GameObject):
+    alive = False
     direct = (0, -1), (1, 0), (0, 1), (-1, 0)
 
-    def __init__(self, gamemap, coord, rotation, color, scores):
-        self.rotation = rotation
+    def __init__(self, gamemap, color, scores):
+        self.rotation = 0
         self.map_layer = 'base'
         super(Snake, self).__init__(gamemap, (), 'snake')
         self.speed = 0.4
         self.drawdata['color'] = color
         self.scores = scores
-        self.start(coord)
 
     def start(self, coord):
+        if not self.gamemap.can_start(coord):
+            return
         self.alive = True
         self.len = 3
         info = str(self.rotation) + 'h'
@@ -117,7 +120,6 @@ class Snake(GameObject):
         self.greenlet = spawn(self.step)
 
     def kill(self):
-        print 'snake dead'
         self.alive = False
         del self.pieces[:]
         self.greenlet.kill()

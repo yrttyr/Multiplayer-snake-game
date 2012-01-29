@@ -47,6 +47,10 @@ class GameMapContainer(dict):
         for gamemap in self.values():
             del gamemap.change[:]
 
+    def can_start(self, coord):
+        mapobj = self['ground'][coord].obj
+        return getattr(mapobj, 'start_pos', False)
+
 class GameMap(WeakValueDictionary):
     def __init__(self, container):
         WeakValueDictionary.__init__(self)

@@ -3,5 +3,6 @@
 
 import sender
 
+import game
 import server
 server.start()

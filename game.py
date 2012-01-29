@@ -128,20 +128,24 @@ class Game(AbstractGame):
         self.greenlet = spawn(self.step)
 
     def subscribe(self, sub):
+        if self.snake_count >= self.max_snake:
+            raise MaxplayerError
+        player = sub['Player']
+        snake = self.add_snake(player.scores_contr)
+        player.new_game(snake)
+        self.players.add(player)
+        sub.subscribe(self.players)
+
         self.send_mapdata(to=sub)
         self.send_all_drawdata(to=sub)
         self.send_all_coord(to=sub)
 
-        sub['Player'].setdata(self)
-        self.players.add(sub['Player'])
-        sub.subscribe(self.players)
+    def unsubscribe(self, sub):
+        self.game.remove_snake(sub['Player'].snake)
 
-    def add_snake(self, coord, direct, scores):
-        if self.snake_count >= self.max_snake:
-            raise MaxplayerError
+    def add_snake(self, scores):
         self.snake_count += 1
-        return self.add_object('Snake', coord, direct,
-                               self.snake_color.pop(), scores)
+        return self.add_object('Snake', self.snake_color.pop(), scores)
 
     def remove_snake(self, snake):
         self.snake_count -= 1
