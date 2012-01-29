@@ -128,10 +128,12 @@ class Game(AbstractGame):
         self.greenlet = spawn(self.step)
 
     def subscribe(self, sub):
-        sub['Player'].setdata(self)
         self.send_mapdata(to=sub)
         self.send_all_drawdata(to=sub)
         self.send_all_coord(to=sub)
+
+        sub['Player'].setdata(self)
+        self.players.add(sub['Player'])
         sub.subscribe(self.players)
 
     def add_snake(self, coord, direct, scores):

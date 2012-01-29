@@ -153,7 +153,15 @@ function MapsList() {
 }
 function PlayersList() {
     this.div = document.getElementById('scoreslist');
-    this.__proto__ = PlayersList.prototype;
+    this.set = function(indef, data) {
+        var el = document.getElementById(indef);
+        if(!el) {
+            var el = document.createElement('div');
+            el.setAttribute('id', indef);
+            this.div.appendChild(el);
+        }
+        el.innerHTML = data;
+    }
 }
 
 function Game() {
