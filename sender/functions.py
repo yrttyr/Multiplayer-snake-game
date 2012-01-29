@@ -127,7 +127,7 @@ def _send_once_wrap(fn):
     @wraps(fn)
     def wrapper(self, to, *args, **kwargs):
         cache_key = (id(self), args)
-        if args in sendto:
+        if cache_key in sendto:
             if sendto[cache_key]['status'] != 2:
                 sendto[cache_key]['status'] = 1
                 sendto[cache_key]['to'].update(to)
