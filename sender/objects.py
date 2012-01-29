@@ -25,10 +25,10 @@ class SendList(set):
     def unsubscribe_to(self, sub, key):
         sub.unsubscribe(key)
 
-    @sender.recv_meth('del')
-    def delete(self, sub, obj):
-        print 'delete', obj
-        self.remove(obj)
+    #@sender.recv_meth('del')
+    #def delete(self, sub, obj):
+        #print 'delete', obj
+        #self.remove(obj)
 
     def add(self, obj):
         super(SendList, self).add(obj)
