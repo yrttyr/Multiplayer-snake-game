@@ -58,3 +58,25 @@ function parseReceive(data) {
     }
     return data
 }
+
+SendList.prototype.set = function(indef, data) {
+    var el = this.getElement(indef);
+    if(!el) {
+        var el = this.createElement();
+        el.setAttribute('id', indef);
+        this.saveElement(el);
+    }
+    this.modifyElementdata.apply([el, indef].concat(data));
+};
+SendList.prototype.getElement = function(indef) {
+    return document.getElementById(indef)
+};
+SendList.prototype.createElement = function(indef) {
+    return document.createElement('div')
+};
+SendList.prototype.saveElement = function(el) {
+    this.div.appendChild(el)
+};
+SendList.prototype.modifyElement = function(el, indef, data) {
+    el.innerHTML = data
+};
