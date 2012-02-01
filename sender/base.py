@@ -6,6 +6,7 @@ from weakref import WeakValueDictionary, ref
 from public import get_wrapper
 
 wrapper_functions = []
+from functions import receive
 
 class Link(object):
     keeper = set()
@@ -65,12 +66,15 @@ class Subscriber(Link):
     def call(self):
         pass
 
-    def send(self, get_data):
+    def send(self, data):
         try:
-            self.connect.send(get_data())
+            self.connect.send(data)
         except EnvironmentError:
             print 'kill'
             self.kill()
+
+    def receive(self, data):
+        receive(self, data)
 
     def __del__(self):
         print 'subsc del'

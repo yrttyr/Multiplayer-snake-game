@@ -4,6 +4,8 @@
 from functools import wraps
 
 from public import get_wrapper
+import base
+import protocol
 
 def set_base_params(cls, params):
     if params['name'] is None:
@@ -59,13 +61,11 @@ def sendfunwrapper(cls, params):
 def _sendwrap(fn):
     @wraps(fn)
     def wrapper(self, to, *args, **kwargs):
-        def get_data(_cache=[]):
-            if not _cache:
-                data = fn(self, *args, **kwargs)
-                _cache.append((self, fn, data))
-            return _cache[0]
+        data = fn(self, *args, **kwargs)
+        data = protocol.encode((self, fn, data))
+
         for sub in to:
-            sub.send(get_data)
+            sub.send(data)
     setattr(fn.im_class, fn.__name__, wrapper)
 
 def sendtofunwrapper(cls, params):
@@ -74,16 +74,15 @@ def sendtofunwrapper(cls, params):
         _sendtowrap(meth, params['Wrapper'])
 
 def _sendtowrap(fn, wrappers):
-    from sender.base import Wrapper, Subscriber
     @wraps(fn)
     def wrapper(self, *args, **kwargs):
         to = kwargs.pop('to', None)
         if to is None:
             wr = get_wrapper(self)
             to = set(get_wrapper(id(self)))
-        elif isinstance(to, Wrapper):
+        elif isinstance(to, base.Wrapper):
             to = set(to)
-        elif isinstance(to, Subscriber):
+        elif isinstance(to, base.Subscriber):
             to = set((to,))
         else: raise
 
@@ -92,6 +91,10 @@ def _sendtowrap(fn, wrappers):
 
         fn(self, to, *args, **kwargs)
     setattr(fn.im_class, fn.__name__, wrapper)
+
+def receive(sub, data):
+    fn, args = protocol.decode(sub, data)
+    fn(sub, *args)
 
 def recvfunwrapper(cls, params):
     recvmeth = getmeth_by_name(cls, params['recvmeth_name'])
@@ -107,12 +110,10 @@ def _recvwrap(fn):
 def send_consructor_wrap(cls, fn):
     @wraps(fn)
     def wrapper(self, to, *args, **kwargs):
-        def get_data(_cache=[]):
-            if not _cache:
-                data = fn(self, *args, **kwargs)
-                _cache.append((self, type(self), data))
-            return _cache[0]
-        to.send(get_data)
+        data = fn(self, *args, **kwargs)
+        data = protocol.encode((self, type(self), data))
+
+        to.send(data)
     setattr(cls, 'init', wrapper)
 
 import gevent
@@ -147,7 +148,5 @@ def _send_once_wrap(fn):
         sendto[cache_key] = data
     setattr(fn.im_class, fn.__name__, wrapper)
 
-
-from base import wrapper_functions
-wrapper_functions.extend((set_base_params, initfunwrapper, delfunwrapper,
-    recvfunwrapper, sendfunwrapper))
+base.wrapper_functions.extend((set_base_params, initfunwrapper,
+    delfunwrapper, recvfunwrapper, sendfunwrapper))
