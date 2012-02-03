@@ -61,8 +61,9 @@ def sendfunwrapper(cls, params):
 def _sendwrap(fn):
     @wraps(fn)
     def wrapper(self, to, *args, **kwargs):
+        meth = getattr(self, fn.__name__)
         data = fn(self, *args, **kwargs)
-        data = protocol.encode((self, fn, data))
+        data = protocol.encode((meth, data))
 
         for sub in to:
             sub.send(data)
@@ -110,10 +111,9 @@ def _recvwrap(fn):
 def send_consructor_wrap(cls, fn):
     @wraps(fn)
     def wrapper(self, to, *args, **kwargs):
+        to.send(protocol.encode((type(self), (id(self), ))))
         data = fn(self, *args, **kwargs)
-        data = protocol.encode((self, type(self), data))
-
-        to.send(data)
+        to.send(protocol.encode((self, data)))
     setattr(cls, 'init', wrapper)
 
 import gevent

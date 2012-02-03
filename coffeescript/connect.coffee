@@ -10,9 +10,9 @@ create_connect = ->
         console.log e.data
         data = parseReceive e.data
         console.log data
-        [obj, fn, params] = data
 
-        fn.apply(obj, params)
+        [fn, params] = data
+        fn(params...)
 
     connect.sendData = (data) ->
         data = JSON.stringify(data, encode)
@@ -25,26 +25,30 @@ encode = (key, value) ->
             return {'^obj': value.indef}
     return value
 
-meths = {}
 parseReceive = (data) ->
     data = JSON.parse(data, decode)
-    for key, value of meths
-        data[key] = data[key - 1][value]
-    window.meths = {}
-    data
+    return data
 
 decode = (key, value) ->
     if value['^class']
-        return window[value['^class']]
+        return createObject(window[value['^class']])
     else if value['^obj']
-        objid = value['^obj']
-        if not objects[objid]
-            objects[objid] = {'indef': objid}
-        return objects[objid]
+        return objects[value['^obj']]
     else if value['^meth']
-        meths[key] = value['^meth'];
-        return value['^meth']
+        return callMeth(value['^meth']...)
     return value
+
+createObject = (constr) ->
+    (indef) ->
+        objects[indef] = (args...) ->
+            objects[indef] = new constr(args...)
+            objects[indef].indef = indef
+        console.log('objects now', indef)
+
+callMeth = (indef, fn_name) ->
+    (args...) ->
+        obj = objects[indef]
+        obj[fn_name](args...)
 
 class SendList
     set: (indef, data) ->

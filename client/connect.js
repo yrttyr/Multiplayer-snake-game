@@ -1,4 +1,5 @@
-var SendList, create_connect, decode, encode, meths, objects, parseReceive;
+var SendList, callMeth, createObject, create_connect, decode, encode, objects, parseReceive,
+  __slice = Array.prototype.slice;
 
 if (window.MozWebSocket) window.WebSocket = MozWebSocket;
 
@@ -7,12 +8,12 @@ objects = {};
 create_connect = function() {
   window.connect = new WebSocket("ws://localhost:8080/chat");
   connect.onmessage = function(e) {
-    var data, fn, obj, params;
+    var data, fn, params;
     console.log(e.data);
     data = parseReceive(e.data);
     console.log(data);
-    obj = data[0], fn = data[1], params = data[2];
-    return fn.apply(obj, params);
+    fn = data[0], params = data[1];
+    return fn.apply(null, params);
   };
   return connect.sendData = function(data) {
     data = JSON.stringify(data, encode);
@@ -32,36 +33,45 @@ encode = function(key, value) {
   return value;
 };
 
-meths = {};
-
 parseReceive = function(data) {
-  var key, value;
   data = JSON.parse(data, decode);
-  for (key in meths) {
-    value = meths[key];
-    data[key] = data[key - 1][value];
-  }
-  window.meths = {};
   return data;
 };
 
 decode = function(key, value) {
-  var objid;
   if (value['^class']) {
-    return window[value['^class']];
+    return createObject(window[value['^class']]);
   } else if (value['^obj']) {
-    objid = value['^obj'];
-    if (!objects[objid]) {
-      objects[objid] = {
-        'indef': objid
-      };
-    }
-    return objects[objid];
+    return objects[value['^obj']];
   } else if (value['^meth']) {
-    meths[key] = value['^meth'];
-    return value['^meth'];
+    return callMeth.apply(null, value['^meth']);
   }
   return value;
+};
+
+createObject = function(constr) {
+  return function(indef) {
+    objects[indef] = function() {
+      var args;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      objects[indef] = (function(func, args, ctor) {
+        ctor.prototype = func.prototype;
+        var child = new ctor, result = func.apply(child, args);
+        return typeof result === "object" ? result : child;
+      })(constr, args, function() {});
+      return objects[indef].indef = indef;
+    };
+    return console.log('objects now', indef);
+  };
+};
+
+callMeth = function(indef, fn_name) {
+  return function() {
+    var args, obj;
+    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    obj = objects[indef];
+    return obj[fn_name].apply(obj, args);
+  };
 };
 
 SendList = (function() {

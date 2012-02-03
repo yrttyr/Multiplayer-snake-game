@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import json
+import types
 
 def encode(data):
     print data
@@ -9,10 +10,10 @@ def encode(data):
                        default=obj_to_indef)
 
 def obj_to_indef(obj):
-    if type(obj) is type:
+    if type(obj) is types.TypeType:
         return {'^class': obj.__name__}
-    if hasattr(obj, 'im_func'): # is method?
-        return {'^meth': obj._sender['sendname']}
+    if type(obj) is types.MethodType:
+        return {'^meth': (id(obj.im_self), obj._sender['sendname'])}
     return {'^obj': id(obj)}
 
 def decode(sub, data):
