@@ -48,6 +48,8 @@ class GameMapContainer(dict):
             del gamemap.change[:]
 
     def can_start(self, coord):
+        if coord in self['base']:
+            return False
         mapobj = self['ground'][coord].obj
         return getattr(mapobj, 'start_pos', False)
 
