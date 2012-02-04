@@ -34,7 +34,7 @@ class SendList(set):
         super(SendList, self).add(obj)
         for name in getattr(obj, 'send_attrs', ()):
             type(obj).__dict__[name].subscribe(obj, self.change)
-        self.send_delete(obj)
+        self.send(obj)
 
     def remove(self, obj):
         super(SendList, self).remove(obj)
