@@ -15,6 +15,7 @@ def _get_id():
 
 class GameObject(object):
     get_id = _get_id().next
+    map_layer = 'base'
 
     def __init__(self, gamemap, coord, drawtype='image'):
         self.gamemap = gamemap
@@ -42,15 +43,15 @@ class GameObject(object):
 
 class EmptyObject(GameObject):
     def __init__(self, gamemap, coord):
-        self.map_layer = 'base'
         super(EmptyObject, self).__init__(gamemap, (), 'empty')
 
     def get_coord(self):
         return self.indef, []
 
 class Ground(GameObject):
+    map_layer = 'ground'
+
     def __init__(self, gamemap, coord):
-        self.map_layer = 'ground'
         super(Ground, self).__init__(gamemap, ())
         self.drawdata['image'] = 'empty'
 
@@ -59,7 +60,6 @@ class Ground(GameObject):
 
 class Rabbit(GameObject):
     def __init__(self, gamemap, coord):
-        self.map_layer = 'base'
         super(Rabbit, self).__init__(gamemap, coord)
         self.drawdata['image'] = 'rabbit'
         self.speed = 10.0
@@ -83,7 +83,6 @@ class Rabbit(GameObject):
 
 class Wall(GameObject):
     def __init__(self, gamemap, coord):
-        self.map_layer = 'base'
         super(Wall, self).__init__(gamemap, coord, 'wall')
 
     def coll(self, coll_obj, map_object):
@@ -91,10 +90,10 @@ class Wall(GameObject):
         return False
 
 class StartPosition(GameObject):
+    map_layer = 'ground'
     start_pos = True
 
     def __init__(self, gamemap, coord):
-        self.map_layer = 'ground'
         super(StartPosition, self).__init__(gamemap, coord)
         self.drawdata['image'] = 'start_position'
 
@@ -104,7 +103,6 @@ class Snake(GameObject):
 
     def __init__(self, gamemap, color, scores):
         self.rotation = 0
-        self.map_layer = 'base'
         super(Snake, self).__init__(gamemap, (), 'snake')
         self.speed = 0.4
         self.drawdata['color'] = color
