@@ -2,19 +2,14 @@
 # -*- coding: utf-8 -*-
 
 from random import randint
+from itertools import count
 
 from gevent import sleep, spawn
 
 from gamemap import MapObject, Coord
 
-def _get_id():
-    a = 0
-    while True:
-        yield a
-        a += 1
-
 class GameObject(object):
-    get_id = _get_id().next
+    get_id = count().next
     map_layer = 'base'
 
     def __init__(self, gamemap, coord, drawtype='image'):
