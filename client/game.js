@@ -1,5 +1,7 @@
 var Game, Gamemap, GamemapContainer, GamesList, MapsList, Player, PlayersList, needDraw_fill, update,
-  __indexOf = Array.prototype.indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+  __indexOf = Array.prototype.indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+  __hasProp = Object.prototype.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
 needDraw_fill = function(X, Y) {
   var x, y, _results;
@@ -125,7 +127,9 @@ Gamemap = (function() {
 
 })();
 
-GamesList = (function() {
+GamesList = (function(_super) {
+
+  __extends(GamesList, _super);
 
   function GamesList() {
     var button, title,
@@ -156,27 +160,22 @@ GamesList = (function() {
     this.div.appendChild(title);
   }
 
-  GamesList.prototype.set = function(indef, data) {
-    var button, el,
-      _this = this;
-    el = document.getElementById(indef);
-    if (!el) {
-      el = document.createElement('div');
-      el.setAttribute('id', indef);
-      this.div.appendChild(el);
-    }
-    button = document.createElement('input');
+  GamesList.prototype.createElement = function() {
+    return document.createElement('input');
+  };
+
+  GamesList.prototype.modifyElement = function(button, indef, data) {
+    var _this = this;
     button.type = 'button';
     button.value = indef;
-    button.onclick = function() {
+    return button.onclick = function() {
       return connect.sendData([_this, 'subscribe_to', indef]);
     };
-    return el.appendChild(button);
   };
 
   return GamesList;
 
-})();
+})(SendList);
 
 MapsList = (function() {
 
@@ -204,26 +203,17 @@ MapsList = (function() {
 
 })();
 
-PlayersList = (function() {
+PlayersList = (function(_super) {
+
+  __extends(PlayersList, _super);
 
   function PlayersList() {
     this.div = document.getElementById('scoreslist');
   }
 
-  PlayersList.prototype.set = function(indef, data) {
-    var el;
-    el = document.getElementById(indef);
-    if (!el) {
-      el = document.createElement('div');
-      el.setAttribute('id', indef);
-      this.div.appendChild(el);
-    }
-    return el.innerHTML = data;
-  };
-
   return PlayersList;
 
-})();
+})(SendList);
 
 Game = (function() {
 

@@ -74,7 +74,7 @@ class Gamemap
             data.push([indef, coord])
         return data
 
-class GamesList
+class GamesList extends SendList
     constructor: ->
         @div = document.getElementById('games')
         @maplist = document.getElementById('mapslist')
@@ -100,19 +100,14 @@ class GamesList
         title.innerHTML = 'Список игр'
         @div.appendChild(title)
 
-    set: (indef, data) ->
-        el = document.getElementById(indef)
-        if not el
-            el = document.createElement('div')
-            el.setAttribute('id', indef)
-            @div.appendChild(el)
+    createElement: () ->
+        document.createElement('input')
 
-        button = document.createElement('input')
+    modifyElement: (button, indef, data) ->
         button.type = 'button'
         button.value = indef
         button.onclick = =>
-            connect.sendData([@, 'subscribe_to', indef]);
-        el.appendChild(button)
+            connect.sendData([@, 'subscribe_to', indef])
 
 class MapsList
     constructor: ->
@@ -126,17 +121,9 @@ class MapsList
         len = @div.options.length
         @div.options[len] = new Option(mapname, mapname)
 
-class PlayersList
+class PlayersList extends SendList
     constructor: ->
         @div = document.getElementById('scoreslist')
-
-    set: (indef, data) ->
-        el = document.getElementById(indef)
-        if not el
-            el = document.createElement('div')
-            el.setAttribute('id', indef)
-            @div.appendChild(el)
-        el.innerHTML = data
 
 class Game
     constructor: ->

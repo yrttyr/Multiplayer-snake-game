@@ -86,14 +86,14 @@ SendList = (function() {
       el.setAttribute('id', indef);
       this.saveElement(el);
     }
-    return this.modifyElementdata.apply([el, indef].concat(data));
+    return this.modifyElement.apply(this, [el, indef].concat(data));
   };
 
   SendList.prototype.getElement = function(indef) {
     return document.getElementById(indef);
   };
 
-  SendList.prototype.createElement = function(indef) {
+  SendList.prototype.createElement = function() {
     return document.createElement('div');
   };
 

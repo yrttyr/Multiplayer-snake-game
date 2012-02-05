@@ -57,12 +57,12 @@ class SendList
             el = @createElement()
             el.setAttribute('id', indef)
             @saveElement(el)
-        @modifyElementdata.apply([el, indef].concat(data))
+        @modifyElement([el, indef].concat(data)...)
 
     getElement: (indef) ->
         document.getElementById(indef)
 
-    createElement: (indef) ->
+    createElement: ->
         document.createElement('div')
 
     saveElement: (el) ->
