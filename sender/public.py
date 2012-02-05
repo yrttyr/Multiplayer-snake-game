@@ -18,7 +18,14 @@ def _get_wrapper(key):
 
     if isinstance(key, basestring):
         return Wrapper._dict[key]
-    return Wrapper._dict[type(key).__name__]
+    if type(key).__name__ in Wrapper._dict:
+        return Wrapper._dict[type(key).__name__]
+
+    try:
+        return Wrapper._dict[id(key.obj)]
+    except:
+        pass
+    raise KeyError()
 
 def get_wrapped(key):
     return get_wrapper(key).obj
