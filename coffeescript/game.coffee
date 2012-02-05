@@ -79,28 +79,20 @@ class GamesList extends SendList
         @div = document.getElementById('games')
         @maplist = document.getElementById('mapslist')
 
-        button = document.createElement('input')
-        button.type = 'button'
-        button.value = 'Создать игру'
-        button.onclick = =>
+        @div.appendChild(@button('Создать игру', =>
             if @maplist.value != ''
-                connect.sendData([@, 'create_game', @maplist.value])
-        @div.appendChild(button)
+                connect.sendData([@, 'create_game', @maplist.value])))
 
-        button = document.createElement('input')
-        button.type = 'button'
-        button.value = 'Редактор карт'
-        button.onclick = =>
+        @div.appendChild(@button('Редактор карт', =>
             if @input.value != ''
                 connect.sendData([@, 'create_map', @input.value])
-                @input.value = ''
-        @div.appendChild(button);
+                @input.value = ''))
 
         title = document.createElement('div')
         title.innerHTML = 'Список игр'
         @div.appendChild(title)
 
-    createElement: () ->
+    createElement: ->
         document.createElement('input')
 
     modifyElement: (button, indef, data) ->

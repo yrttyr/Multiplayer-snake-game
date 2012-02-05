@@ -70,3 +70,10 @@ class SendList
 
     modifyElement: (el, indef, data) ->
         el.innerHTML = data
+
+    button: (value, onclick) ->
+        button = document.createElement('input')
+        button.type = 'button'
+        button.value = value
+        button.onclick = onclick
+        return button

@@ -105,6 +105,15 @@ SendList = (function() {
     return el.innerHTML = data;
   };
 
+  SendList.prototype.button = function(value, onclick) {
+    var button;
+    button = document.createElement('input');
+    button.type = 'button';
+    button.value = value;
+    button.onclick = onclick;
+    return button;
+  };
+
   return SendList;
 
 })();

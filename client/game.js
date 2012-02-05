@@ -136,25 +136,18 @@ GamesList = (function(_super) {
       _this = this;
     this.div = document.getElementById('games');
     this.maplist = document.getElementById('mapslist');
-    button = document.createElement('input');
-    button.type = 'button';
-    button.value = 'Создать игру';
-    button.onclick = function() {
-      if (_this.maplist.value !== '') {
-        return connect.sendData([_this, 'create_game', _this.maplist.value]);
-      }
-    };
-    this.div.appendChild(button);
-    button = document.createElement('input');
-    button.type = 'button';
-    button.value = 'Редактор карт';
-    button.onclick = function() {
-      if (_this.input.value !== '') {
-        connect.sendData([_this, 'create_map', _this.input.value]);
-        return _this.input.value = '';
-      }
-    };
-    this.div.appendChild(button);
+this.div.appendChild(this.button('Создать игру', function() {
+  if (_this.maplist.value !== '') {
+    return connect.sendData([_this, 'create_game', _this.maplist.value]);
+  }
+}));
+this.div.appendChild(this.button('Редактор карт', function() {
+  if (_this.input.value !== '') {
+    connect.sendData([_this, 'create_map', _this.input.value]);
+    return _this.input.value = '';
+  }
+}));
+
     title = document.createElement('div');
     title.innerHTML = 'Список игр';
     this.div.appendChild(title);
