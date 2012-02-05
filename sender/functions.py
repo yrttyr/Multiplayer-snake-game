@@ -79,8 +79,7 @@ def _sendtowrap(fn, wrappers):
     def wrapper(self, *args, **kwargs):
         to = kwargs.pop('to', None)
         if to is None:
-            wr = get_wrapper(self)
-            to = set(get_wrapper(id(self)))
+            to = set(get_wrapper(self))
         elif isinstance(to, base.Wrapper):
             to = set(to)
         elif isinstance(to, base.Subscriber):
