@@ -139,9 +139,9 @@ class WrapperSingleton(Wrapper):
 
 class WrapperUnique(Wrapper):
     def _subscribe(self, sub):
-        super(WrapperUnique, self)._subscribe(sub)
         name = type(self.obj).__name__
         if name in sub._dict:
             sub.unsubscribe(sub[name])
+        super(WrapperUnique, self)._subscribe(sub)
         sub[name] = self.obj
 
