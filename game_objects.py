@@ -115,7 +115,8 @@ class Snake(GameObject):
     def kill(self):
         self.alive = False
         del self.pieces[:]
-        self.greenlet.kill()
+        if hasattr(self, 'greenlet'):
+            self.greenlet.kill()
 
     def del_last(self):
         self.pieces.pop(0)

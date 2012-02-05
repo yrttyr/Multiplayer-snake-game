@@ -141,7 +141,7 @@ class Game(AbstractGame):
         self.send_all_coord(to=sub)
 
     def unsubscribe(self, sub):
-        self.game.remove_snake(sub['Player'].snake)
+        self.remove_snake(sub['Player'].snake)
 
     def add_snake(self, scores):
         self.snake_count += 1
