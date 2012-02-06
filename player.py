@@ -18,6 +18,10 @@ class Player(object):
         self.snake = snake
         self.scores = 0
 
+    def end_game(self):
+        self.snake.kill()
+        del self.snake
+
     def scores_contr(self, value):
         self.scores += value
 
