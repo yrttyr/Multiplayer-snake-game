@@ -5,7 +5,6 @@ import json
 import types
 
 def encode(data):
-    print data
     return json.dumps(data, separators=(',', ':'),
                        default=obj_to_indef)
 
@@ -17,7 +16,6 @@ def obj_to_indef(obj):
     return {'^obj': id(obj)}
 
 def decode(sub, data):
-    print data
     data = data.decode("utf-8")
     data = json.loads(data, object_hook=get_parse(sub))
 
