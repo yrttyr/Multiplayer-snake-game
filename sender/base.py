@@ -15,17 +15,11 @@ class Link(object):
         self.objs = set()
         self.keeper.add(self)
 
-    def kill(self):
-        while self.objs:
-            self.unsubscribe(self.objs.pop())
-
-        self.keeper.discard(self)
-
     def _subscribe(self, obj):
         self.objs.add(obj)
 
     def _unsubscribe(self, obj):
-        self.objs.discard(obj)
+        self.objs.remove(obj)
 
     def __contains__(self, key):
         return key in self.objs
@@ -70,11 +64,19 @@ class Subscriber(Link):
         try:
             self.connect.send(data)
         except EnvironmentError:
-            print 'kill'
+            print 'subs kill'
             self.kill()
+            self.connect.close()
 
     def receive(self, data):
         receive(self, data)
+
+    def kill(self):
+        if self in self.keeper:
+            for obj in set(self.objs):
+                self.unsubscribe(obj)
+
+            self.keeper.remove(self)
 
     def __del__(self):
         print 'subsc del'

@@ -34,13 +34,13 @@ def start():
     server.serve_forever()
 
 def websocket_app(ws, t):
-    ws.subscriber = Subscriber(ws)
+    subscriber = Subscriber(ws)
     while True:
         data = ws.receive()
         if data:
-            ws.subscriber.receive(data)
+            subscriber.receive(data)
         else:
-            ws.subscriber = None
+            subscriber.kill()
             break
 
 class Subscriber(Subscriber):
