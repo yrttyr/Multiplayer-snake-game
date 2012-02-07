@@ -173,7 +173,6 @@ update = ->
     requestAnimationFrame(update, game.canvas)
 
 class Player
-    # ToDo: Удалять события вместе с объектом
     rotate_keycode = {87: 0, 68: 1, 83: 2, 65: 3}
     constructor: ->
         document.onkeydown = (e) =>
