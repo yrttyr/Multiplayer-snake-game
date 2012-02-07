@@ -71,6 +71,9 @@ class SendList
     modifyElement: (el, indef, data) ->
         el.innerHTML = data
 
+    removeElement: (indef) ->
+        @div.removeChild(@getElement(indef))
+
     button: (value, onclick) ->
         button = document.createElement('input')
         button.type = 'button'

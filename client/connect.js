@@ -105,6 +105,10 @@ SendList = (function() {
     return el.innerHTML = data;
   };
 
+  SendList.prototype.removeElement = function(indef) {
+    return this.div.removeChild(this.getElement(indef));
+  };
+
   SendList.prototype.button = function(value, onclick) {
     var button;
     button = document.createElement('input');

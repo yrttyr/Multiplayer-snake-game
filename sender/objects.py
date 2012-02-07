@@ -13,7 +13,7 @@ class SendList(set):
         return id(obj), [getattr(obj, name, '')
                     for name in obj.send_attrs]
 
-    @sender.send_meth('delRow')
+    @sender.send_meth('removeElement')
     def send_delete(self, obj):
         return id(obj),
 
