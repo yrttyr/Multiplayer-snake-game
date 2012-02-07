@@ -72,11 +72,10 @@ class Subscriber(Link):
         receive(self, data)
 
     def kill(self):
-        if self in self.keeper:
-            for obj in set(self.objs):
-                self.unsubscribe(obj)
+        for obj in set(self.objs):
+            self.unsubscribe(obj)
 
-            self.keeper.remove(self)
+        self.keeper.discard(self)
 
     def __del__(self):
         print 'subsc del'
