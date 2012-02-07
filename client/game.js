@@ -132,22 +132,21 @@ GamesList = (function(_super) {
   __extends(GamesList, _super);
 
   function GamesList() {
-    var button, title,
+    var title,
       _this = this;
     this.div = document.getElementById('games');
     this.maplist = document.getElementById('mapslist');
-this.div.appendChild(this.button('Создать игру', function() {
-  if (_this.maplist.value !== '') {
-    return connect.sendData([_this, 'create_game', _this.maplist.value]);
-  }
-}));
-this.div.appendChild(this.button('Редактор карт', function() {
-  if (_this.input.value !== '') {
-    connect.sendData([_this, 'create_map', _this.input.value]);
-    return _this.input.value = '';
-  }
-}));
-
+    this.div.appendChild(this.button('Создать игру', function() {
+      if (_this.maplist.value !== '') {
+        return connect.sendData([_this, 'create_game', _this.maplist.value]);
+      }
+    }));
+    this.div.appendChild(this.button('Редактор карт', function() {
+      if (_this.input.value !== '') {
+        connect.sendData([_this, 'create_map', _this.input.value]);
+        return _this.input.value = '';
+      }
+    }));
     title = document.createElement('div');
     title.innerHTML = 'Список игр';
     this.div.appendChild(title);
@@ -289,12 +288,24 @@ update = function() {
 };
 
 Player = (function() {
+  var rotate_keycode;
+
+  rotate_keycode = {
+    87: 0,
+    68: 1,
+    83: 2,
+    65: 3
+  };
 
   function Player() {
     var _this = this;
     document.onkeydown = function(e) {
+      var rotate;
       e = window.event || e;
-      return connect.sendData([_this, 'set_rotate', e.keyCode]);
+      rotate = rotate_keycode[e.keyCode];
+      if (typeof rotate !== "undefined") {
+        return connect.sendData([_this, 'set_rotate', rotate]);
+      }
     };
     document.getElementById('canvas').onmousedown = function(e) {
       var x, y;
@@ -307,3 +318,4 @@ Player = (function() {
   return Player;
 
 })();
+

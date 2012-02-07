@@ -174,10 +174,13 @@ update = ->
 
 class Player
     # ToDo: Удалять события вместе с объектом
+    rotate_keycode = {87: 0, 68: 1, 83: 2, 65: 3}
     constructor: ->
         document.onkeydown = (e) =>
             e = window.event || e
-            connect.sendData([@, 'set_rotate', e.keyCode])
+            rotate = rotate_keycode[e.keyCode]
+            if typeof rotate != "undefined"
+                connect.sendData([@, 'set_rotate', rotate])
 
         document.getElementById('canvas').onmousedown = (e) =>
             x = parseInt(e.pageX / CELLSIZE)
