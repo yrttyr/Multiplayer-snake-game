@@ -86,7 +86,7 @@ SendList = (function() {
       el.setAttribute('id', indef);
       this.saveElement(el);
     }
-    return this.modifyElement.apply(this, [el, indef].concat(data));
+    return this.modifyElement.apply(this, [el, indef].concat(__slice.call(data)));
   };
 
   SendList.prototype.getElement = function(indef) {

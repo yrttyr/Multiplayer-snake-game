@@ -57,7 +57,7 @@ class SendList
             el = @createElement()
             el.setAttribute('id', indef)
             @saveElement(el)
-        @modifyElement([el, indef].concat(data)...)
+        @modifyElement(el, indef, data...)
 
     getElement: (indef) ->
         document.getElementById(indef)
