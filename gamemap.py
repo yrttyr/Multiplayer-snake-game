@@ -19,33 +19,33 @@ class Coord(_Coord):
     def __add__(self, o):
         return self.x + o[0], self.y + o[1]
 
-class GameMapContainer(dict):
+class Gamemap(dict):
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
     def add_layer(self, name):
-        self[name] = GameMap(self)
+        self[name] = Layer(self)
 
     def changed(self):
-        return any(gamemap.change for gamemap in self.values())
+        return any(layer.change for layer in self.values())
 
     def get_layers_data(self):
         d = {}
-        for name, gamemap in self.items():
-            d[name] = gamemap.default_object.obj.indef
+        for name, layer in self.items():
+            d[name] = layer.default_object.obj.indef
         return d
 
     def get_changed_data(self):
         data = []
-        for gamemap in self.values():
-             data.extend(gamemap.get_change_coord())
-             del gamemap.change[:]
+        for layer in self.values():
+             data.extend(layer.get_change_coord())
+             del layer.change[:]
         return data
 
     def clear_changed_data(self):
-        for gamemap in self.values():
-            del gamemap.change[:]
+        for layer in self.values():
+            del layer.change[:]
 
     def can_start(self, coord):
         if coord in self['base']:
@@ -53,7 +53,7 @@ class GameMapContainer(dict):
         mapobj = self['ground'][coord].obj
         return getattr(mapobj, 'start_pos', False)
 
-class GameMap(WeakValueDictionary):
+class Layer(WeakValueDictionary):
     def __init__(self, container):
         WeakValueDictionary.__init__(self)
         self.container = container

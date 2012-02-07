@@ -1,57 +1,40 @@
-var Game, Gamemap, GamemapContainer, GamesList, MapsList, Player, PlayersList, needDraw_fill, update,
+var AbstractGame, Game, Gamemap, GamesList, Layer, MapsList, Player, PlayersList,
   __indexOf = Array.prototype.indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
   __hasProp = Object.prototype.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; },
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
-needDraw_fill = function(X, Y) {
-  var x, y, _results;
-  _results = [];
-  for (x = 0; 0 <= X ? x <= X : x >= X; 0 <= X ? x++ : x--) {
-    _results.push((function() {
-      var _results2;
-      _results2 = [];
-      for (y = 0; 0 <= Y ? y <= Y : y >= Y; 0 <= Y ? y++ : y--) {
-        _results2.push(gamemap_cont.needDraw.push([x, y]));
-      }
-      return _results2;
-    })());
-  }
-  return _results;
-};
+Gamemap = (function() {
 
-GamemapContainer = (function() {
-
-  function GamemapContainer(layers) {
-    var layer, name;
+  function Gamemap(SizeX, SizeY, layers_data) {
+    var default_tile, name;
+    this.SizeX = SizeX;
+    this.SizeY = SizeY;
     this.canvas = document.getElementById('canvas');
     this.ctx = this.canvas.getContext('2d');
     this.needDraw = [];
-    window.gamemap = {};
-    for (name in layers) {
-      layer = layers[name];
-      gamemap[name] = new Gamemap(layer);
+    this.layer = {};
+    for (name in layers_data) {
+      default_tile = layers_data[name];
+      this.layer[name] = new Layer(this, default_tile);
     }
+    this.refreshCanvas();
+    this.redrawAll();
   }
 
-  GamemapContainer.prototype.setSize = function(SizeX, SizeY) {
-    this.SizeX = SizeX;
-    this.SizeY = SizeY;
-    return this.refreshCanvas();
-  };
-
-  GamemapContainer.prototype.setSizeX = function(x) {
+  Gamemap.prototype.setSizeX = function(x) {
     this.SizeX = x || parseInt(document.getElementById('Size_X').value);
     this.refreshCanvas();
-    return needDraw_fill(gamemap_cont.SizeX, gamemap_cont.SizeY);
+    return this.redrawAll();
   };
 
-  GamemapContainer.prototype.setSizeY = function(y) {
+  Gamemap.prototype.setSizeY = function(y) {
     this.SizeY = y || parseInt(document.getElementById('Size_Y').value);
     this.refreshCanvas();
-    return needDraw_fill(gamemap_cont.SizeX, gamemap_cont.SizeY);
+    return this.redrawAll();
   };
 
-  GamemapContainer.prototype.refreshCanvas = function() {
+  Gamemap.prototype.refreshCanvas = function() {
     document.getElementById('Size_X').value = this.SizeX;
     document.getElementById('Size_Y').value = this.SizeY;
     this.canvas.width = this.SizeX * CELLSIZE;
@@ -59,53 +42,87 @@ GamemapContainer = (function() {
     return this.canvas.style.display = 'block';
   };
 
-  GamemapContainer.prototype.addObject = function(indef, coord, info) {
-    var gamemap_name;
-    gamemap_name = game.objects[indef].gamemap;
-    return gamemap[gamemap_name].set(coord, indef, info);
+  Gamemap.prototype.addObject = function(indef, coord, info) {
+    var layer_name;
+    layer_name = game.objects[indef].layer;
+    return this.layer[layer_name].set(coord, indef, info);
   };
 
-  return GamemapContainer;
+  Gamemap.prototype.redrawAll = function() {
+    var x, y, _ref, _results;
+    _results = [];
+    for (x = 0, _ref = this.SizeX; 0 <= _ref ? x <= _ref : x >= _ref; 0 <= _ref ? x++ : x--) {
+      _results.push((function() {
+        var _ref2, _results2;
+        _results2 = [];
+        for (y = 0, _ref2 = this.SizeY; 0 <= _ref2 ? y <= _ref2 : y >= _ref2; 0 <= _ref2 ? y++ : y--) {
+          _results2.push(this.needDraw.push([x, y]));
+        }
+        return _results2;
+      }).call(this));
+    }
+    return _results;
+  };
+
+  Gamemap.prototype.draw = function() {
+    var base, base_obj, coord, ground, ground_obj, key, _ref, _results;
+    _ref = this.needDraw;
+    _results = [];
+    for (key in _ref) {
+      coord = _ref[key];
+      ground = this.layer['ground'].get(coord);
+      base = this.layer['base'].get(coord);
+      ground_obj = game.objects[ground.indef];
+      ground_obj.draw(this.ctx, coord[0], coord[1], ground.type);
+      base_obj = game.objects[base.indef];
+      base_obj.draw(this.ctx, coord[0], coord[1], base.type);
+      _results.push(this.needDraw.splice(key, 1));
+    }
+    return _results;
+  };
+
+  return Gamemap;
 
 })();
 
-Gamemap = (function() {
+Layer = (function() {
 
-  function Gamemap(default_obj_id) {
-    this.default_obj_id = default_obj_id;
+  function Layer(container, default_tile_id) {
+    this.container = container;
+    this.default_tile_id = default_tile_id;
     this.dict = {};
   }
 
-  Gamemap.prototype.set = function(k, x, type) {
+  Layer.prototype.set = function(k, x, type) {
     this.dict[k] = {
       'indef': x,
       'type': type || ''
     };
-    return gamemap_cont.needDraw.push(k);
+    return this.container.needDraw.push(k);
   };
 
-  Gamemap.prototype.setType = function(k, x) {
+  Layer.prototype.setType = function(k, x) {
     if (__indexOf.call(this.dict, k) >= 0) {
       this.dict[k].type = x;
-      return gamemap_cont.needDraw.push(k);
+      return this.container.needDraw.push(k);
     } else {
       return console.error('Cell empty', k);
     }
   };
 
-  Gamemap.prototype.get = function(k) {
+  Layer.prototype.get = function(k) {
     return this.dict[k] || {
-      'indef': this.default_obj_id,
+      'indef': this.default_tile_id,
       'type': ''
     };
   };
 
-  Gamemap.prototype.getType = function(k) {
+  Layer.prototype.getType = function(k) {
     if (__indexOf.call(this.dict, k) >= 0) return this.dict[k].type;
     return '';
   };
 
-  Gamemap.prototype.getListIdAndCoord = function() {
+  Layer.prototype.getListIdAndCoord = function() {
     var coord, data, indef, key, value, _ref;
     data = [];
     _ref = this.dict;
@@ -123,7 +140,7 @@ Gamemap = (function() {
     return data;
   };
 
-  return Gamemap;
+  return Layer;
 
 })();
 
@@ -207,41 +224,18 @@ PlayersList = (function(_super) {
 
 })(SendList);
 
-Game = (function() {
+AbstractGame = (function() {
 
-  function Game() {
+  function AbstractGame() {
     window.game = this;
-    this.canvas = document.getElementById('canvas');
-    this.ctx = this.canvas.getContext('2d');
     this.objects = {};
-    document.getElementById('etitorTools').style.display = 'none';
-    document.getElementById('games').style.display = 'block';
   }
 
-  Game.prototype.drawAll = function() {
-    var base, base_obj, coord, ground, ground_obj, key, _ref, _results;
-    _ref = gamemap_cont.needDraw;
-    _results = [];
-    for (key in _ref) {
-      coord = _ref[key];
-      ground = gamemap['ground'].get(coord);
-      base = gamemap['base'].get(coord);
-      ground_obj = this.objects[ground.indef];
-      ground_obj.draw(coord[0], coord[1], ground.type);
-      base_obj = this.objects[base.indef];
-      base_obj.draw(coord[0], coord[1], base.type);
-      _results.push(gamemap_cont.needDraw.splice(key, 1));
-    }
-    return _results;
+  AbstractGame.prototype.setMapdata = function(x, y, layer) {
+    return this.gamemap = new Gamemap(x, y, layer);
   };
 
-  Game.prototype.setMapdata = function(x, y, layer) {
-    window.gamemap_cont = new GamemapContainer(layer);
-    gamemap_cont.setSize(x, y);
-    return needDraw_fill(x, y);
-  };
-
-  Game.prototype.setListDrawdata = function(list) {
+  AbstractGame.prototype.setListDrawdata = function(list) {
     var el, _i, _len, _results;
     _results = [];
     for (_i = 0, _len = list.length; _i < _len; _i++) {
@@ -251,12 +245,11 @@ Game = (function() {
     return _results;
   };
 
-  Game.prototype.setDrawdata = function(data) {
-    this.objects[data['indef']] = new objectTypes[data['drawtype']](data);
-    return this.objects[data['indef']].gamemap = data['map_layer'];
+  AbstractGame.prototype.setDrawdata = function(data) {
+    return this.objects[data['indef']] = new objectTypes[data['drawtype']](data);
   };
 
-  Game.prototype.setAllListCoord = function(list) {
+  AbstractGame.prototype.setAllListCoord = function(list) {
     list.forEach(function(value) {
       var cell, cells, coord, indef, info, _i, _len, _results;
       indef = value[0], cells = value[1];
@@ -265,27 +258,41 @@ Game = (function() {
         cell = cells[_i];
         coord = cell[0];
         info = cell[1] || '';
-        _results.push(gamemap_cont.addObject(indef, coord, info));
+        _results.push(this.gamemap.addObject(indef, coord, info));
       }
       return _results;
     }, this);
-    return requestAnimationFrame(update, game.canvas);
+    return requestAnimationFrame(this.update, this.canvas);
   };
 
-  Game.prototype.setListCoord = function(list) {
+  AbstractGame.prototype.setListCoord = function(list) {
     return list.forEach(function(value) {
-      return gamemap_cont.addObject(value[0], value[1], value[2]);
-    });
+      return this.gamemap.addObject(value[0], value[1], value[2]);
+    }, this);
+  };
+
+  return AbstractGame;
+
+})();
+
+Game = (function(_super) {
+
+  __extends(Game, _super);
+
+  function Game() {
+    this.update = __bind(this.update, this);    Game.__super__.constructor.apply(this, arguments);
+    document.getElementById('etitorTools').style.display = 'none';
+    document.getElementById('games').style.display = 'block';
+  }
+
+  Game.prototype.update = function() {
+    this.gamemap.draw();
+    return requestAnimationFrame(this.update, this.gamemap.canvas);
   };
 
   return Game;
 
-})();
-
-update = function() {
-  game.drawAll();
-  return requestAnimationFrame(update, game.canvas);
-};
+})(AbstractGame);
 
 Player = (function() {
   var rotate_keycode;
@@ -318,4 +325,3 @@ Player = (function() {
   return Player;
 
 })();
-

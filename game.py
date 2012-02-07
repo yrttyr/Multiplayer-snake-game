@@ -11,7 +11,7 @@ import sender.objects
 from sender import public
 from sender.base import WrapperSingleton, WrapperUnique
 
-from gamemap import GameMapContainer
+from gamemap import Gamemap
 import player
 import game_objects
 
@@ -70,7 +70,7 @@ class AbstractGame(object):
         with open('maps/' + name) as f:
             data = json.load(f)
 
-        self.gamemap = GameMapContainer(data['SizeX'], data['SizeY'])
+        self.gamemap = Gamemap(data['SizeX'], data['SizeY'])
         for layer_name in data['layers'].keys():
             self.gamemap.add_layer(layer_name)
 
@@ -164,7 +164,7 @@ class Game(AbstractGame):
 
 gameslist = GamesList(Game)
 
-@public.send_cls(wrapper=WrapperUnique) #'Game')
+@public.send_cls(wrapper=WrapperUnique)
 class MapEditor(AbstractGame):
     def __init__(self, cont, map_key=None):
         super(MapEditor, self).__init__(cont)

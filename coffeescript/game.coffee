@@ -1,30 +1,25 @@
-needDraw_fill = (X, Y) ->
-    for x in [0..X]
-        for y in [0..Y]
-            gamemap_cont.needDraw.push([x, y])
-
-class GamemapContainer
-    constructor: (layers) ->
+class Gamemap
+    constructor: (@SizeX, @SizeY, layers_data) ->
         @canvas = document.getElementById('canvas')
         @ctx = @canvas.getContext('2d')
         @needDraw = []
 
-        window.gamemap = {}
-        for name, layer of layers
-            gamemap[name] = new Gamemap(layer)
+        @layer = {}
+        for name, default_tile of layers_data
+            @layer[name] = new Layer(@, default_tile)
 
-    setSize: (@SizeX, @SizeY) ->
         @refreshCanvas()
+        @redrawAll()
 
     setSizeX: (x) ->
         @SizeX = x || parseInt(document.getElementById('Size_X').value)
         @refreshCanvas()
-        needDraw_fill(gamemap_cont.SizeX, gamemap_cont.SizeY)
+        @redrawAll()
 
     setSizeY: (y) ->
         @SizeY = y || parseInt(document.getElementById('Size_Y').value)
         @refreshCanvas()
-        needDraw_fill(gamemap_cont.SizeX, gamemap_cont.SizeY)
+        @redrawAll()
 
     refreshCanvas: ->
         document.getElementById('Size_X').value = @SizeX
@@ -34,26 +29,44 @@ class GamemapContainer
         @canvas.style.display = 'block'
 
     addObject: (indef, coord, info) ->
-        gamemap_name = game.objects[indef].gamemap
-        gamemap[gamemap_name].set(coord, indef, info)
+        layer_name = game.objects[indef].layer
+        @layer[layer_name].set(coord, indef, info)
 
+    redrawAll: ->
+        for x in [0..@SizeX]
+            for y in [0..@SizeY]
+                @needDraw.push([x, y])
 
-class Gamemap
-    constructor: (@default_obj_id) ->
+    draw: ->
+        for key, coord of @needDraw
+            ground = @layer['ground'].get(coord)
+            base = @layer['base'].get(coord)
+
+            ground_obj = game.objects[ground.indef]
+            ground_obj.draw(@ctx, coord[0], coord[1], ground.type)
+
+            base_obj = game.objects[base.indef]
+            base_obj.draw(@ctx, coord[0], coord[1], base.type)
+
+            @needDraw.splice(key, 1)
+
+class Layer
+    constructor: (@container, @default_tile_id) ->
         @dict = {}
+
     set: (k, x, type) ->
         @dict[k] = {'indef': x, 'type': type || ''}
-        gamemap_cont.needDraw.push(k)
+        @container.needDraw.push(k)
 
     setType: (k, x) ->
         if k in @dict
             @dict[k].type = x
-            gamemap_cont.needDraw.push(k)
+            @container.needDraw.push(k)
         else
             console.error('Cell empty', k)
 
     get: (k) ->
-        return @dict[k] || {'indef': @default_obj_id, 'type': ''}
+        return @dict[k] || {'indef': @default_tile_id, 'type': ''}
 
     getType: (k) ->
         if k in @dict
@@ -117,33 +130,13 @@ class PlayersList extends SendList
     constructor: ->
         @div = document.getElementById('scoreslist')
 
-class Game
+class AbstractGame
     constructor: ->
         window.game = @
-        @canvas = document.getElementById('canvas')
-        @ctx = @canvas.getContext('2d')
         @objects = {}
 
-        document.getElementById('etitorTools').style.display = 'none'
-        document.getElementById('games').style.display = 'block'
-
-    drawAll: ->
-        for key, coord of gamemap_cont.needDraw
-            ground = gamemap['ground'].get(coord)
-            base = gamemap['base'].get(coord)
-
-            ground_obj = @objects[ground.indef]
-            ground_obj.draw(coord[0], coord[1], ground.type)
-
-            base_obj = @objects[base.indef]
-            base_obj.draw(coord[0], coord[1], base.type)
-
-            gamemap_cont.needDraw.splice(key, 1)
-
     setMapdata: (x, y, layer) ->
-        window.gamemap_cont = new GamemapContainer(layer)
-        gamemap_cont.setSize(x, y)
-        needDraw_fill(x, y)
+        @gamemap = new Gamemap(x, y, layer)
 
     setListDrawdata: (list) ->
         for el in list
@@ -151,7 +144,6 @@ class Game
 
     setDrawdata: (data) ->
         @objects[data['indef']] = new objectTypes[data['drawtype']](data)
-        @objects[data['indef']].gamemap = data['map_layer']
 
     setAllListCoord: (list) ->
         list.forEach((value) ->
@@ -159,18 +151,24 @@ class Game
             for cell in cells
                 coord = cell[0]
                 info = cell[1] || ''
-                gamemap_cont.addObject(indef, coord, info)
+                @gamemap.addObject(indef, coord, info)
         , @)
-        requestAnimationFrame(update, game.canvas);
+        requestAnimationFrame(@update, @canvas);
 
     setListCoord: (list) ->
         list.forEach((value) ->
-            gamemap_cont.addObject(value[0], value[1], value[2])
-        )
+            @gamemap.addObject(value[0], value[1], value[2])
+        , @)
 
-update = ->
-    game.drawAll()
-    requestAnimationFrame(update, game.canvas)
+class Game extends AbstractGame
+    constructor: ->
+        super
+        document.getElementById('etitorTools').style.display = 'none'
+        document.getElementById('games').style.display = 'block'
+
+    update: =>
+        @gamemap.draw()
+        requestAnimationFrame(@update, @gamemap.canvas)
 
 class Player
     rotate_keycode = {87: 0, 68: 1, 83: 2, 65: 3}
