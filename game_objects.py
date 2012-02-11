@@ -40,9 +40,6 @@ class GameObject(object):
 class EmptyObject(GameObject):
     cls_drawdata = {'drawtype': 'empty'}
 
-    def __init__(self, layer, coord):
-        super(EmptyObject, self).__init__(layer, ())
-
     def get_coord(self):
         return self.indef, []
 
@@ -50,9 +47,6 @@ class Ground(GameObject):
     map_layer = 'ground'
     cls_drawdata = {'drawtype': 'image',
                     'image': 'empty'}
-
-    def __init__(self, layer, coord):
-        super(Ground, self).__init__(layer, ())
 
     def get_coord(self):
         return self.indef, []
@@ -97,9 +91,6 @@ class StartPosition(GameObject):
     cls_drawdata = {'drawtype': 'image',
                     'image': 'start_position'}
     start_pos = True
-
-    def __init__(self, layer, coord):
-        super(StartPosition, self).__init__(layer, coord)
 
 class Snake(GameObject):
     alive = False
