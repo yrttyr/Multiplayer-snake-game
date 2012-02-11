@@ -11,12 +11,13 @@ from gamemap import MapObject, Coord
 class GameObject(object):
     get_id = count().next
     map_layer = 'base'
+    cls_drawdata = {'drawtype': 'image'}
 
-    def __init__(self, layer, coord, drawtype='image'):
+    def __init__(self, layer, coord):
         self.indef = self.get_id()
         self.drawdata = {'indef': self.indef,
-                        'drawtype': drawtype,
                         'map_layer': self.map_layer}
+        self.drawdata.update(self.cls_drawdata)
 
         self.layer = layer
         self.pieces = list()
@@ -37,26 +38,31 @@ class GameObject(object):
         return self.drawdata
 
 class EmptyObject(GameObject):
+    cls_drawdata = {'drawtype': 'empty'}
+
     def __init__(self, layer, coord):
-        super(EmptyObject, self).__init__(layer, (), drawtype='empty')
+        super(EmptyObject, self).__init__(layer, ())
 
     def get_coord(self):
         return self.indef, []
 
 class Ground(GameObject):
     map_layer = 'ground'
+    cls_drawdata = {'drawtype': 'image',
+                    'image': 'empty'}
 
     def __init__(self, layer, coord):
         super(Ground, self).__init__(layer, ())
-        self.drawdata['image'] = 'empty'
 
     def get_coord(self):
         return self.indef, []
 
 class Rabbit(GameObject):
+    cls_drawdata = {'drawtype': 'image',
+                    'image': 'rabbit'}
+
     def __init__(self, layer, coord):
         super(Rabbit, self).__init__(layer, coord)
-        self.drawdata['image'] = 'rabbit'
         self.speed = 10.0
         self.greenlet = spawn(self.step)
 
@@ -77,8 +83,10 @@ class Rabbit(GameObject):
             sleep(self.speed)
 
 class Wall(GameObject):
+    cls_drawdata = {'drawtype': 'wall'}
+
     def __init__(self, layer, coord):
-        super(Wall, self).__init__(layer, coord, 'wall')
+        super(Wall, self).__init__(layer, coord)
 
     def coll(self, coll_obj, map_object):
         coll_obj.len -= 1
@@ -86,19 +94,21 @@ class Wall(GameObject):
 
 class StartPosition(GameObject):
     map_layer = 'ground'
+    cls_drawdata = {'drawtype': 'image',
+                    'image': 'start_position'}
     start_pos = True
 
     def __init__(self, layer, coord):
         super(StartPosition, self).__init__(layer, coord)
-        self.drawdata['image'] = 'start_position'
 
 class Snake(GameObject):
     alive = False
+    cls_drawdata = {'drawtype': 'snake'}
     direct = (0, -1), (1, 0), (0, 1), (-1, 0)
 
     def __init__(self, layer, color, scores):
         self.rotation = 0
-        super(Snake, self).__init__(layer, (), 'snake')
+        super(Snake, self).__init__(layer, ())
         self.speed = 0.4
         self.drawdata['color'] = color
         self.scores = scores
