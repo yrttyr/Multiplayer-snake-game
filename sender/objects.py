@@ -1,10 +1,8 @@
 import sender
 from weakref import WeakValueDictionary
-from functools import partial
 
 class SendList(set):
     def __init__(self, cls=None):
-        self.change = partial(self._change)
         if cls:
             auto_sub(cls, self)
 
@@ -40,7 +38,7 @@ class SendList(set):
         super(SendList, self).remove(obj)
         self.send_delete(obj)
 
-    def _change(self, obj, name, val):
+    def change(self, obj, name, val):
         self.send(obj)
 
     def subscribe(self, sub):
