@@ -12,15 +12,15 @@ class GameObject(object):
     get_id = count().next
     map_layer = 'base'
 
-    def __init__(self, gamemap, coord, drawtype='image'):
-        self.gamemap = gamemap
-        self.pieces = list()
-        self.create_object(coord)
-
+    def __init__(self, layer, coord, drawtype='image'):
         self.indef = self.get_id()
         self.drawdata = {'indef': self.indef,
                         'drawtype': drawtype,
                         'map_layer': self.map_layer}
+
+        self.layer = layer
+        self.pieces = list()
+        self.create_object(coord)
 
     def coll(self, coll_obj, map_object):
         return True
@@ -37,8 +37,8 @@ class GameObject(object):
         return self.drawdata
 
 class EmptyObject(GameObject):
-    def __init__(self, gamemap, coord):
-        super(EmptyObject, self).__init__(gamemap, (), 'empty')
+    def __init__(self, layer, coord):
+        super(EmptyObject, self).__init__(layer, (), drawtype='empty')
 
     def get_coord(self):
         return self.indef, []
@@ -46,16 +46,16 @@ class EmptyObject(GameObject):
 class Ground(GameObject):
     map_layer = 'ground'
 
-    def __init__(self, gamemap, coord):
-        super(Ground, self).__init__(gamemap, ())
+    def __init__(self, layer, coord):
+        super(Ground, self).__init__(layer, ())
         self.drawdata['image'] = 'empty'
 
     def get_coord(self):
         return self.indef, []
 
 class Rabbit(GameObject):
-    def __init__(self, gamemap, coord):
-        super(Rabbit, self).__init__(gamemap, coord)
+    def __init__(self, layer, coord):
+        super(Rabbit, self).__init__(layer, coord)
         self.drawdata['image'] = 'rabbit'
         self.speed = 10.0
         self.greenlet = spawn(self.step)
@@ -69,16 +69,16 @@ class Rabbit(GameObject):
     def step(self):
         while True:
             while True:
-                coord = randint(0, self.gamemap.x), randint(0, self.gamemap.y)
-                if isinstance(self.gamemap[self.map_layer][coord].obj, EmptyObject):
-                    break
+                coord = randint(0, 20), randint(0, 20)
+                #if isinstance(self.gamemap[self.map_layer][coord].obj, EmptyObject):
+                   # break
+                break
             self.pieces.append(MapObject(coord, self, ''))
-
             sleep(self.speed)
 
 class Wall(GameObject):
-    def __init__(self, gamemap, coord):
-        super(Wall, self).__init__(gamemap, coord, 'wall')
+    def __init__(self, layer, coord):
+        super(Wall, self).__init__(layer, coord, 'wall')
 
     def coll(self, coll_obj, map_object):
         coll_obj.len -= 1
@@ -88,23 +88,23 @@ class StartPosition(GameObject):
     map_layer = 'ground'
     start_pos = True
 
-    def __init__(self, gamemap, coord):
-        super(StartPosition, self).__init__(gamemap, coord)
+    def __init__(self, layer, coord):
+        super(StartPosition, self).__init__(layer, coord)
         self.drawdata['image'] = 'start_position'
 
 class Snake(GameObject):
     alive = False
     direct = (0, -1), (1, 0), (0, 1), (-1, 0)
 
-    def __init__(self, gamemap, color, scores):
+    def __init__(self, layer, color, scores):
         self.rotation = 0
-        super(Snake, self).__init__(gamemap, (), 'snake')
+        super(Snake, self).__init__(layer, (), 'snake')
         self.speed = 0.4
         self.drawdata['color'] = color
         self.scores = scores
 
     def start(self, coord):
-        if not self.gamemap.can_start(coord):
+        if not self.layer.container.can_start(coord):
             return
         self.alive = True
         self.len = 3
@@ -132,7 +132,7 @@ class Snake(GameObject):
             self.pieces[-2].info = self.pieces[-2].info[1] + str(self.rotation)
 
     def test_coll(self, coord):
-        map_object = self.gamemap[self.map_layer][coord]
+        map_object = self.layer[coord]
         return map_object.obj.coll(self, map_object)
 
     def coll(self, coll_obj, map_object):

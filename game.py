@@ -71,36 +71,28 @@ class AbstractGame(object):
             data = json.load(f)
 
         self.gamemap = Gamemap(data['SizeX'], data['SizeY'])
-        for layer_name in data['layers'].keys():
-            self.gamemap.add_layer(layer_name)
+
+        for layer_name, default_tile in data['layers'].items():
+            layer = self.gamemap.add_layer(layer_name)
+            default_obj = self.add_object(default_tile, layer=layer)
+            layer.set_default(default_obj)
 
         for name, coord in data['objects']:
             self.add_object(name, coord)
 
-        for layer_name, obj_id in data['layers'].items():
-            self.gamemap[layer_name].set_default(self.objects[obj_id])
-
-        self.gamemap.clear_changed_data()
-
     def add_object(self, name, coord=(), *arg, **kwarg):
-        obj_class = getattr(game_objects, name)
-        obj = obj_class(self.gamemap, coord, *arg, **kwarg)
+        cls = getattr(game_objects, name)
+        layer = kwarg.pop('layer', None)
+        if layer is None:
+            layer = self.gamemap[cls.map_layer]
+        obj = cls(layer, coord, *arg, **kwarg)
         self.objects.append(obj)
         self.send_drawdata(obj)
         return obj
 
-    @public.send_meth('setMapdata')
-    def send_mapdata(self):
-        return self.gamemap.x, self.gamemap.y, \
-               self.gamemap.get_layers_data()
-
     @public.send_meth('setAllListCoord')
     def send_all_coord(self):
         return [obj.get_coord() for obj in self.objects],
-
-    @public.send_meth('setListCoord')
-    def send_change_coord(self):
-        return self.gamemap.get_changed_data(),
 
     @public.send_meth('setListDrawdata')
     def send_all_drawdata(self):
@@ -125,11 +117,11 @@ class Game(AbstractGame):
                             (255, 255, 0), (255, 0, 255), (0, 255, 255)]
         self.add_object('Rabbit')
 
-        self.greenlet = spawn(self.step)
-
     def subscribe(self, sub):
         if self.snake_count >= self.max_snake:
             raise MaxplayerError
+
+        sub.subscribe(self.gamemap)
 
         self.snake_count += 1
 
@@ -140,7 +132,6 @@ class Game(AbstractGame):
         player.new_game(snake)
 
         sub.subscribe(self.players)
-        self.send_mapdata(to=sub)
         self.send_all_drawdata(to=sub)
         self.send_all_coord(to=sub)
 
@@ -155,12 +146,7 @@ class Game(AbstractGame):
         player.end_game()
 
         sub.unsubscribe(self.players)
-
-    def step(self):
-        while True:
-            if self.gamemap.changed():
-                self.send_change_coord()
-            sleep(0.04)
+        sub.unsubscribe(self.gamemap)
 
 gameslist = GamesList(Game)
 

@@ -51,7 +51,7 @@ decode = function(key, value) {
 
 createObject = function(constr) {
   return function(indef) {
-    objects[indef] = function() {
+    return objects[indef] = function() {
       var args;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       objects[indef] = (function(func, args, ctor) {
@@ -59,9 +59,9 @@ createObject = function(constr) {
         var child = new ctor, result = func.apply(child, args);
         return typeof result === "object" ? result : child;
       })(constr, args, function() {});
-      return objects[indef].indef = indef;
+      objects[indef].indef = indef;
+      return console.log('objects now', indef);
     };
-    return console.log('objects now', indef);
   };
 };
 

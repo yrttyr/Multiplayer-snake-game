@@ -10,6 +10,7 @@ Gamemap = (function() {
     var default_tile, name;
     this.SizeX = SizeX;
     this.SizeY = SizeY;
+    window.gamemap = this;
     this.canvas = document.getElementById('canvas');
     this.ctx = this.canvas.getContext('2d');
     this.needDraw = [];
@@ -42,7 +43,7 @@ Gamemap = (function() {
     return this.canvas.style.display = 'block';
   };
 
-  Gamemap.prototype.addObject = function(indef, coord, info) {
+  Gamemap.prototype.set_mapobject = function(indef, coord, info) {
     var layer_name;
     layer_name = game.objects[indef].layer;
     return this.layer[layer_name].set(coord, indef, info);
@@ -231,10 +232,6 @@ AbstractGame = (function() {
     this.objects = {};
   }
 
-  AbstractGame.prototype.setMapdata = function(x, y, layer) {
-    return this.gamemap = new Gamemap(x, y, layer);
-  };
-
   AbstractGame.prototype.setListDrawdata = function(list) {
     var el, _i, _len, _results;
     _results = [];
@@ -258,17 +255,11 @@ AbstractGame = (function() {
         cell = cells[_i];
         coord = cell[0];
         info = cell[1] || '';
-        _results.push(this.gamemap.addObject(indef, coord, info));
+        _results.push(gamemap.set_mapobject(indef, coord, info));
       }
       return _results;
-    }, this);
+    });
     return requestAnimationFrame(this.update, this.canvas);
-  };
-
-  AbstractGame.prototype.setListCoord = function(list) {
-    return list.forEach(function(value) {
-      return this.gamemap.addObject(value[0], value[1], value[2]);
-    }, this);
   };
 
   return AbstractGame;
@@ -286,8 +277,8 @@ Game = (function(_super) {
   }
 
   Game.prototype.update = function() {
-    this.gamemap.draw();
-    return requestAnimationFrame(this.update, this.gamemap.canvas);
+    gamemap.draw();
+    return requestAnimationFrame(this.update, gamemap.canvas);
   };
 
   return Game;

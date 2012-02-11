@@ -1,5 +1,6 @@
 class Gamemap
     constructor: (@SizeX, @SizeY, layers_data) ->
+        window.gamemap = @
         @canvas = document.getElementById('canvas')
         @ctx = @canvas.getContext('2d')
         @needDraw = []
@@ -28,7 +29,7 @@ class Gamemap
         @canvas.height = @SizeY * CELLSIZE
         @canvas.style.display = 'block'
 
-    addObject: (indef, coord, info) ->
+    set_mapobject: (indef, coord, info) ->
         layer_name = game.objects[indef].layer
         @layer[layer_name].set(coord, indef, info)
 
@@ -135,9 +136,6 @@ class AbstractGame
         window.game = @
         @objects = {}
 
-    setMapdata: (x, y, layer) ->
-        @gamemap = new Gamemap(x, y, layer)
-
     setListDrawdata: (list) ->
         for el in list
             @setDrawdata(el)
@@ -151,14 +149,9 @@ class AbstractGame
             for cell in cells
                 coord = cell[0]
                 info = cell[1] || ''
-                @gamemap.addObject(indef, coord, info)
-        , @)
+                gamemap.set_mapobject(indef, coord, info)
+        )
         requestAnimationFrame(@update, @canvas);
-
-    setListCoord: (list) ->
-        list.forEach((value) ->
-            @gamemap.addObject(value[0], value[1], value[2])
-        , @)
 
 class Game extends AbstractGame
     constructor: ->
@@ -167,8 +160,8 @@ class Game extends AbstractGame
         document.getElementById('games').style.display = 'block'
 
     update: =>
-        @gamemap.draw()
-        requestAnimationFrame(@update, @gamemap.canvas)
+        gamemap.draw()
+        requestAnimationFrame(@update, gamemap.canvas)
 
 class Player
     rotate_keycode = {87: 0, 68: 1, 83: 2, 65: 3}

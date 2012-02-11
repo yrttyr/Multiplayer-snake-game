@@ -3,7 +3,7 @@
 var objectTypes = {
     'empty': function(data) {
         return {
-            'getSRC': function() {return 'images/other/empty.png';},
+            'getSRC': function() {return null;},
             'draw': function(ctx, x, y) {},
             'layer': data['map_layer']
         }

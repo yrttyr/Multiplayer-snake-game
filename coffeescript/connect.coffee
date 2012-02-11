@@ -43,7 +43,7 @@ createObject = (constr) ->
         objects[indef] = (args...) ->
             objects[indef] = new constr(args...)
             objects[indef].indef = indef
-        console.log('objects now', indef)
+            console.log('objects now', indef)
 
 callMeth = (indef, fn_name) ->
     (args...) ->
