@@ -15,6 +15,12 @@ class Link(object):
         self.objs = set()
         self.keeper.add(self)
 
+    def kill(self):
+        for obj in set(self.objs):
+            self.unsubscribe(obj)
+
+        self.keeper.discard(self)
+
     def _subscribe(self, obj):
         self.objs.add(obj)
 
@@ -71,12 +77,6 @@ class Subscriber(Link):
     def receive(self, data):
         receive(self, data)
 
-    def kill(self):
-        for obj in set(self.objs):
-            self.unsubscribe(obj)
-
-        self.keeper.discard(self)
-
     def __del__(self):
         print 'subsc del'
 
@@ -118,8 +118,7 @@ class Wrapper(Link):
             self.keep_obj = self.obj
 
     def __del__(self):
-        print 'self', self, self.obj
-        print 'wrapper del', type(self.obj).__name__
+        print 'wrapper', type(self.obj).__name__
 
 class WrapperSingletonMeta(WrapperMeta):
     def __call__(cls, wraped_class, *args, **kwargs):

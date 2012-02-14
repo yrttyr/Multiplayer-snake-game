@@ -44,7 +44,6 @@ class GamesList(sender.objects.SendList):
     @public.recv_meth()
     def create_map(self, sub):
         map_ = MapEditor(self)
-        self.append(map_)
         sub.subscribe(map_)
         sub['Player'].setdata(map_)
 

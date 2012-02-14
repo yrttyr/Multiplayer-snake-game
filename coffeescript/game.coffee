@@ -4,10 +4,7 @@ class Gamemap
         @canvas = document.getElementById('canvas')
         @ctx = @canvas.getContext('2d')
         @needDraw = []
-
         @layer = {}
-        for name, default_tile of layers_data
-            @layer[name] = new Layer(@, default_tile)
 
         @refreshCanvas()
         @redrawAll()
@@ -52,17 +49,22 @@ class Gamemap
             @needDraw.splice(key, 1)
 
 class Layer
-    constructor: (@container, @default_tile_id) ->
+    constructor: (@name, @default_tile_id) ->
         @dict = {}
+        gamemap.layer[@name] = @
 
     set: (k, x, type) ->
         @dict[k] = {'indef': x, 'type': type || ''}
-        @container.needDraw.push(k)
+        gamemap.needDraw.push(k)
+
+    removeElement: (key) ->
+        delete @dict[key]
+        gamemap.needDraw.push(key)
 
     setType: (k, x) ->
         if k in @dict
             @dict[k].type = x
-            @container.needDraw.push(k)
+            gamemap.needDraw.push(k)
         else
             console.error('Cell empty', k)
 

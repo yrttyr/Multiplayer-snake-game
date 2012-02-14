@@ -6,8 +6,6 @@ from itertools import count
 
 from gevent import sleep, spawn
 
-from gamemap import MapObject, Coord
-
 class GameObject(object):
     get_id = count().next
     map_layer = 'base'
@@ -26,9 +24,10 @@ class GameObject(object):
     def coll(self, coll_obj, map_object):
         return True
 
-    def create_object(self, coord):
-        for val in coord:
-            self.pieces.append(MapObject(val, self))
+    def create_object(self, coords):
+        for coord in coords:
+            mapobject = self.layer.add_mapobject(self, coord)
+            self.pieces.append(mapobject)
 
     def get_coord(self):
         return self.indef, [(obj.coord, obj.info)
@@ -73,7 +72,8 @@ class Rabbit(GameObject):
                 #if isinstance(self.gamemap[self.map_layer][coord].obj, EmptyObject):
                    # break
                 break
-            self.pieces.append(MapObject(coord, self, ''))
+            mapobject = self.layer.add_mapobject(self, coord)
+            self.pieces.append(mapobject)
             sleep(self.speed)
 
 class Wall(GameObject):
@@ -110,7 +110,8 @@ class Snake(GameObject):
         self.alive = True
         self.len = 3
         info = str(self.rotation) + 'h'
-        self.pieces.append(MapObject(coord, self, info))
+        mapobject = self.layer.add_mapobject(self, coord, info)
+        self.pieces.append(mapobject)
         self.greenlet = spawn(self.step)
 
     def kill(self):
@@ -125,7 +126,8 @@ class Snake(GameObject):
 
     def add_new(self, coord):
         info = '_' + str((self.rotation + 2) % 4)
-        self.pieces.append(MapObject(coord, self, info))
+        mapobject = self.layer.add_mapobject(self, coord, info)
+        self.pieces.append(mapobject)
 
         if self.pieces[-2].info[1] == 'b' or self.pieces[-2].info[1] == 'h':
             self.pieces[-2].info = 'b' + str(self.rotation)

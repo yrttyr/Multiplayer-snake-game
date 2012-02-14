@@ -7,7 +7,6 @@ var AbstractGame, Game, Gamemap, GamesList, Layer, MapsList, Player, PlayersList
 Gamemap = (function() {
 
   function Gamemap(SizeX, SizeY, layers_data) {
-    var default_tile, name;
     this.SizeX = SizeX;
     this.SizeY = SizeY;
     window.gamemap = this;
@@ -15,10 +14,6 @@ Gamemap = (function() {
     this.ctx = this.canvas.getContext('2d');
     this.needDraw = [];
     this.layer = {};
-    for (name in layers_data) {
-      default_tile = layers_data[name];
-      this.layer[name] = new Layer(this, default_tile);
-    }
     this.refreshCanvas();
     this.redrawAll();
   }
@@ -88,10 +83,11 @@ Gamemap = (function() {
 
 Layer = (function() {
 
-  function Layer(container, default_tile_id) {
-    this.container = container;
+  function Layer(name, default_tile_id) {
+    this.name = name;
     this.default_tile_id = default_tile_id;
     this.dict = {};
+    gamemap.layer[this.name] = this;
   }
 
   Layer.prototype.set = function(k, x, type) {
@@ -99,13 +95,18 @@ Layer = (function() {
       'indef': x,
       'type': type || ''
     };
-    return this.container.needDraw.push(k);
+    return gamemap.needDraw.push(k);
+  };
+
+  Layer.prototype.removeElement = function(key) {
+    delete this.dict[key];
+    return gamemap.needDraw.push(key);
   };
 
   Layer.prototype.setType = function(k, x) {
     if (__indexOf.call(this.dict, k) >= 0) {
       this.dict[k].type = x;
-      return this.container.needDraw.push(k);
+      return gamemap.needDraw.push(k);
     } else {
       return console.error('Cell empty', k);
     }
