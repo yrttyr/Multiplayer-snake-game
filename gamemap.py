@@ -41,6 +41,10 @@ class Gamemap(objects.SendDict):
         for layer in self.values():
             sub.subscribe(layer)
 
+    def unsubscribe(self, sub):
+        for layer in self.values():
+            sub.unsubscribe(layer)
+
     def can_start(self, coord):
         if coord in self['base']:
             return False
@@ -73,6 +77,9 @@ class Layer(objects.SendWeakDict):
         return mapobject
 
     def subscribe(self, sub):
+        pass
+
+    def unsubscribe(self, sub):
         pass
 
     def __getitem__(self, coord):

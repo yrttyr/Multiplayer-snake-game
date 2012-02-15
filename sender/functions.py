@@ -20,6 +20,7 @@ def set_base_params(cls, params):
 
     init = cls.__dict__.get('init', lambda s: ())
     send_consructor_wrap(cls, init)
+    send_destructor_wrap(cls)
 
 def _getmeths_names(cls, filter_):
     names = []
@@ -114,6 +115,16 @@ def send_consructor_wrap(cls, fn):
         data = fn(self, *args, **kwargs)
         to.send(protocol.encode((self, data)))
     setattr(cls, 'init', wrapper)
+
+def send_destructor_wrap(cls):
+    def destructor(self, to):
+        meth = getattr(self, 'destructor')
+        data = protocol.encode((meth, ()))
+
+        to.send(data)
+    destructor._sender = {'sendmeth': True,
+                          'sendname': 'destructor'}
+    setattr(cls, 'destructor', destructor)
 
 import gevent
 

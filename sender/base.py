@@ -113,6 +113,7 @@ class Wrapper(Link):
     def _unsubscribe(self, obj):
         super(Wrapper, self)._unsubscribe(obj)
         getattr(self.obj, 'unsubscribe', lambda _: None)(obj)
+        self.obj.destructor(to=obj)
 
         if self:
             self.keep_obj = self.obj

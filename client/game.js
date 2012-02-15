@@ -18,6 +18,10 @@ Gamemap = (function() {
     this.redrawAll();
   }
 
+  Gamemap.prototype.destructor = function() {
+    return delete window.gamemap;
+  };
+
   Gamemap.prototype.setSizeX = function(x) {
     this.SizeX = x || parseInt(document.getElementById('Size_X').value);
     this.refreshCanvas();
@@ -232,6 +236,10 @@ AbstractGame = (function() {
     window.game = this;
     this.objects = {};
   }
+
+  AbstractGame.prototype.destructor = function() {
+    return delete window.game;
+  };
 
   AbstractGame.prototype.setListDrawdata = function(list) {
     var el, _i, _len, _results;

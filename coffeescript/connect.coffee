@@ -46,9 +46,17 @@ createObject = (constr) ->
             console.log('objects now', indef)
 
 callMeth = (indef, fn_name) ->
-    (args...) ->
-        obj = objects[indef]
-        obj[fn_name](args...)
+    if fn_name == 'destructor'
+        (args...) ->
+            obj = objects[indef]
+            try
+                obj[fn_name](args...)
+            catch error
+            delete objects[indef]
+    else
+        (args...) ->
+            obj = objects[indef]
+            obj[fn_name](args...)
 
 class SendList
     set: (indef, data) ->

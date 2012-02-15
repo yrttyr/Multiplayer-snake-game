@@ -66,13 +66,30 @@ createObject = function(constr) {
 };
 
 callMeth = function(indef, fn_name) {
-  return function() {
-    var args, obj;
-    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-    obj = objects[indef];
-    return obj[fn_name].apply(obj, args);
-  };
+  if (fn_name === 'destructor') {
+    return function() {
+      var args, obj;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      obj = objects[indef];
+      try {
+        obj[fn_name].apply(obj, args);
+      } catch (error) {
+
+      }
+      console.error('des');
+      return delete objects[indef];
+    };
+  } else {
+    return function() {
+      var args, obj;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      obj = objects[indef];
+      return obj[fn_name].apply(obj, args);
+    };
+  }
 };
+
+
 
 SendList = (function() {
 

@@ -9,6 +9,9 @@ class Gamemap
         @refreshCanvas()
         @redrawAll()
 
+    destructor: ->
+        delete window.gamemap
+
     setSizeX: (x) ->
         @SizeX = x || parseInt(document.getElementById('Size_X').value)
         @refreshCanvas()
@@ -137,6 +140,9 @@ class AbstractGame
     constructor: ->
         window.game = @
         @objects = {}
+
+    destructor: ->
+        delete window.game
 
     setListDrawdata: (list) ->
         for el in list
