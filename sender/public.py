@@ -11,21 +11,22 @@ def get_wrapper(key, silence=False):
         return None
 
 def _get_wrapper(key):
-    if isinstance(key, int):
+    if isinstance(key, (int, basestring)):
         return Wrapper._dict[key]
-    if id(key) in Wrapper._dict:
-        return Wrapper._dict[id(key)]
-
-    if isinstance(key, basestring):
-        return Wrapper._dict[key]
-    if type(key).__name__ in Wrapper._dict:
-        return Wrapper._dict[type(key).__name__]
+    if isinstance(key, Wrapper):
+        return key
 
     try:
+        return Wrapper._dict[id(key)]
+    except: pass
+    try:
+        return Wrapper._dict[type(key).__name__]
+    except: pass
+    try:
         return Wrapper._dict[id(key.obj)]
-    except:
-        pass
-    raise KeyError()
+    except: pass
+
+    raise KeyError(key)
 
 def get_wrapped(key):
     return get_wrapper(key).obj
