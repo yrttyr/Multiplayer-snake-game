@@ -107,7 +107,7 @@ class Wrapper(Link):
         self.obj.init(to=obj)
         getattr(self.obj, 'subscribe', lambda _: None)(obj)
 
-        if self:
+        if self.objs:
             self.keep_obj = self.obj
 
     def _unsubscribe(self, obj):
@@ -115,11 +115,8 @@ class Wrapper(Link):
         getattr(self.obj, 'unsubscribe', lambda _: None)(obj)
         self.obj.destructor(to=obj)
 
-        if self:
-            self.keep_obj = self.obj
-
-    def __del__(self):
-        print 'wrapper', type(self.obj).__name__
+        if not self.objs:
+            self.keep_obj = None
 
 class WrapperSingletonMeta(WrapperMeta):
     def __call__(cls, wraped_class, *args, **kwargs):

@@ -147,6 +147,9 @@ class Game(AbstractGame):
         sub.unsubscribe(self.players)
         sub.unsubscribe(self.gamemap)
 
+        if self.snake_count == 0:
+            gameslist.remove(self)
+
 gameslist = GamesList(Game)
 
 @public.send_cls(wrapper=WrapperUnique)
