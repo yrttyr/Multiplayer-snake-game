@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from functools import wraps
+from weakref import WeakValueDictionary
 
 from public import get_wrapper
 import base
@@ -126,37 +127,40 @@ def send_destructor_wrap(cls):
                           'sendname': 'destructor'}
     setattr(cls, 'destructor', destructor)
 
-import gevent
-
 def send_once(cls, params):
     sendmeth = getmeth_by_name(cls, params['sendmeth_name'])
     for meth in sendmeth:
         _send_once_wrap(meth)
 
 def _send_once_wrap(fn):
-    sendto = {}
+    sendto = WeakValueDictionary()
     @wraps(fn)
     def wrapper(self, to, *args, **kwargs):
         cache_key = (id(self), args)
         if cache_key in sendto:
-            if sendto[cache_key]['status'] != 2:
-                sendto[cache_key]['status'] = 1
-                sendto[cache_key]['to'].update(to)
+            if sendto[cache_key].status != 2:
+                sendto[cache_key].status = 1
+                sendto[cache_key].to.update(to)
                 return
-
-        def send_and_del(data):
-            while data['status']:
-                data['status'] = 0
-                gevent.sleep(0.1)
-            data['status'] = 2
-            fn(self, data['to'], *args, **kwargs)
-            if sendto[cache_key]['greenlet'] is gevent.getcurrent():
-                del sendto[cache_key]
-        data = {'status': 1,
-                'to': to}
-        data['greenlet'] = gevent.spawn(send_and_del, data)
-        sendto[cache_key] = data
+        call = lambda to: fn(self, to, *args, **kwargs)
+        sendto[cache_key] = TimeoutSend(to, call)
     setattr(fn.im_class, fn.__name__, wrapper)
+
+import gevent
+
+class TimeoutSend(object):
+    def __init__(self, to, call):
+        self.to = to
+        self.status = 1
+        self.call = call
+        self.greenlet = gevent.spawn(self.work)
+
+    def work(self):
+        while self.status:
+            self.status = 0
+            gevent.sleep(0.01)
+        self.status = 2
+        self.call(self.to)
 
 base.wrapper_functions.extend((set_base_params, initfunwrapper,
     delfunwrapper, recvfunwrapper, sendfunwrapper))
