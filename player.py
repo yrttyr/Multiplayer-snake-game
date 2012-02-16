@@ -37,4 +37,3 @@ class Player(object):
 
     def __del__(self):
         print('player del')
-        self.clear()
