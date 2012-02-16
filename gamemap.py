@@ -7,35 +7,20 @@ from collections import namedtuple
 from sender import public, objects
 from sender.base import WrapperUnique
 
-_Coord = namedtuple('Coord', ['x', 'y'])
-class Coord(_Coord):
-    __slots__ = ()
-
-    def __new__(cls, x, y=0):
-        if isinstance(x, (tuple, list)):
-            x, y = x
-        return _Coord.__new__(Coord, x, y)
-
-    def __sub__(self, o):
-        return self.x - o[0], self.y - o[1]
-
-    def __add__(self, o):
-        return self.x + o[0], self.y + o[1]
-
 @public.send_cls(wrapper=WrapperUnique)
 class Gamemap(objects.SendDict):
     def __init__(self, x, y):
         objects.SendDict.__init__(self)
-        self.x = x
-        self.y = y
+        self.Coord = get_coord(self, x, y)
 
-    def add_layer(self, name):
-        layer = Layer(name, self)
+    def add_layer(self, name, create_default_obj):
+        layer = Layer(name, self.Coord)
         self.add(layer)
+        layer.default_object = create_default_obj(layer=layer)
         return layer
 
     def init(self):
-        return self.x, self.y
+        return self.Coord.size_x, self.Coord.size_y
 
     def subscribe(self, sub):
         for layer in self.values():
@@ -45,33 +30,21 @@ class Gamemap(objects.SendDict):
         for layer in self.values():
             sub.unsubscribe(layer)
 
-    def can_start(self, coord):
-        if coord in self['base']:
-            return False
-        mapobj = self['ground'][coord].obj
-        return getattr(mapobj, 'start_pos', False)
-
 @public.send_cls()
 class Layer(objects.SendWeakDict):
     send_attrs = 'name',
 
-    def __init__(self, name, container):
+    def __init__(self, name, Coord):
         objects.SendWeakDict.__init__(self)
         self.name = name
-        self.container = container
+        self.Coord = Coord
+        self.default_object = None
 
     def init(self):
-        return self.name, self.default_object.obj.indef
-
-    def set_default(self, default_object):
-        self.default_object = MapObject(default_object, None)
-
-    def get_real_coord(self, coord):
-        return Coord(coord[0] % self.container.x,
-                     coord[1] % self.container.y)
+        return self.name, self.default_object.indef
 
     def add_mapobject(self, obj, coord, info=''):
-        coord = self.get_real_coord(coord)
+        coord = self.Coord(coord)
         mapobject = MapObject(obj, coord, info)
         self.add(mapobject)
         return mapobject
@@ -83,10 +56,10 @@ class Layer(objects.SendWeakDict):
         pass
 
     def __getitem__(self, coord):
-        coord = self.get_real_coord(coord)
+        coord = self.Coord(coord)
         if coord in self:
             return objects.SendWeakDict.__getitem__(self, coord)
-        return self.default_object
+        return MapObject(self.default_object, coord)
 
 @public.send_cls()
 class MapObject(object):
@@ -98,3 +71,38 @@ class MapObject(object):
         self.layer = obj.layer
         self.info = info
         self.coord = coord
+
+    def can_start(self):
+        if type(self.coord.get_obj('base')).__name__ != 'EmptyObject':
+            return False
+        print self.coord.get_obj('base')
+        mapobj = self.coord.get_obj('ground')
+        return getattr(mapobj, 'start_pos', False)
+
+_Coord = namedtuple('Coord', ['x', 'y'])
+def get_coord(gamemap, x, y):
+    class Coord(_Coord):
+        __slots__ = ()
+
+        def __new__(cls, x, y=0):
+            if isinstance(x, (tuple, list)):
+                x, y = x
+            x %= cls.size_x
+            y %= cls.size_y
+
+            return _Coord.__new__(Coord, x, y)
+
+        def __sub__(self, o):
+            return self.x - o[0], self.y - o[1]
+
+        def __add__(self, o):
+            return self.x + o[0], self.y + o[1]
+
+        def get_obj(self, key):
+            return self.gamemap[key][self].obj
+
+    Coord.gamemap = gamemap
+    Coord.size_x = x
+    Coord.size_y = y
+    return Coord
+

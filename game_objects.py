@@ -105,7 +105,7 @@ class Snake(GameObject):
         self.scores = scores
 
     def start(self, coord):
-        if not self.layer.container.can_start(coord):
+        if not self.layer[coord].can_start():
             return
         self.alive = True
         self.len = 3

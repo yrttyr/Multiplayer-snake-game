@@ -4,9 +4,9 @@
 import json
 import os
 from hashlib import md5
-from weakref import WeakSet
+from functools import partial
 
-from gevent import sleep, spawn
+from gevent import sleep
 import sender.objects
 from sender import public
 from sender.base import WrapperSingleton, WrapperUnique
@@ -72,9 +72,8 @@ class AbstractGame(object):
         self.gamemap = Gamemap(data['SizeX'], data['SizeY'])
 
         for layer_name, default_tile in data['layers'].items():
-            layer = self.gamemap.add_layer(layer_name)
-            default_obj = self.add_object(default_tile, layer=layer)
-            layer.set_default(default_obj)
+            create_default_obj = partial(self.add_object, default_tile)
+            layer = self.gamemap.add_layer(layer_name, create_default_obj)
 
         for name, coord in data['objects']:
             self.add_object(name, coord)
