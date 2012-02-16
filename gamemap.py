@@ -73,11 +73,8 @@ class MapObject(object):
         self.coord = coord
 
     def can_start(self):
-        if type(self.coord.get_obj('base')).__name__ != 'EmptyObject':
-            return False
-        print self.coord.get_obj('base')
-        mapobj = self.coord.get_obj('ground')
-        return getattr(mapobj, 'start_pos', False)
+        objs = self.coord.iter_objs()
+        return all(obj.can_start for obj in objs)
 
 _Coord = namedtuple('Coord', ['x', 'y'])
 def get_coord(gamemap, x, y):
@@ -100,6 +97,10 @@ def get_coord(gamemap, x, y):
 
         def get_obj(self, key):
             return self.gamemap[key][self].obj
+
+        def iter_objs(self):
+            for layer in self.gamemap.values():
+                yield layer[self].obj
 
     Coord.gamemap = gamemap
     Coord.size_x = x

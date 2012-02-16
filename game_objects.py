@@ -7,6 +7,7 @@ from itertools import count
 from gevent import sleep, spawn
 
 class GameObject(object):
+    can_start = False
     get_id = count().next
     map_layer = 'base'
     cls_drawdata = {'drawtype': 'image'}
@@ -37,6 +38,7 @@ class GameObject(object):
         return self.drawdata
 
 class EmptyObject(GameObject):
+    can_start = True
     cls_drawdata = {'drawtype': 'empty'}
 
     def get_coord(self):
@@ -51,6 +53,7 @@ class Ground(GameObject):
         return self.indef, []
 
 class Rabbit(GameObject):
+    can_start = True
     cls_drawdata = {'drawtype': 'image',
                     'image': 'rabbit'}
 
@@ -87,6 +90,7 @@ class Wall(GameObject):
         return False
 
 class StartPosition(GameObject):
+    can_start = True
     map_layer = 'ground'
     cls_drawdata = {'drawtype': 'image',
                     'image': 'start_position'}
