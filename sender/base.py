@@ -93,7 +93,7 @@ class Wrapper(Link):
 
     def __init__(self, obj, group_name):
         super(Wrapper, self).__init__()
-        self._obj = ref(obj)
+        self._obj = ref(obj, lambda wr: self.kill())
         self.keep_obj = None
         self.group_name = group_name
 

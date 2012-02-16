@@ -45,16 +45,6 @@ def initfunwrapper(cls, params):
         old_init(self, *args, **kwargs)
     cls.__init__ = wrapper
 
-def delfunwrapper(cls, params):
-    old_del = getattr(cls, '__del__', lambda _: None)
-    @wraps(old_del)
-    def wrapper(self, *args, **kwargs):
-        wr = get_wrapper(self, True)
-        if wr is not None:
-            wr.kill()
-        old_del(self, *args, **kwargs)
-    cls.__del__ = wrapper
-
 def sendfunwrapper(cls, params):
     sendmeth = getmeth_by_name(cls, params['sendmeth_name'])
     for meth in sendmeth:
@@ -163,4 +153,4 @@ class TimeoutSend(object):
         self.call(self.to)
 
 base.wrapper_functions.extend((set_base_params, initfunwrapper,
-    delfunwrapper, recvfunwrapper, sendfunwrapper))
+                               recvfunwrapper, sendfunwrapper))
