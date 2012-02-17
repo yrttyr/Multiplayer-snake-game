@@ -64,7 +64,6 @@ class SendDict(SendObject, UserDict.IterableUserDict):
     def __init__(self, cls=None):
         SendObject.__init__(self)
         UserDict.IterableUserDict.__init__(self)
-        self.change = partial(self._change)
 
     def get_send_key(self, obj):
         return getattr(obj, obj.send_attrs[0])
