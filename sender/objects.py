@@ -1,4 +1,4 @@
-from weakref import WeakValueDictionary, ref
+from weakref import WeakValueDictionary, WeakKeyDictionary, ref
 from functools import partial
 import UserDict
 
@@ -101,14 +101,14 @@ class SendWeakDict(WeakValueDictionary, SendDict):
 class Property(object):
     def __init__(self, name):
         self.name = '_%s' % name
-        self.callback = WeakValueDictionary()
+        self.callback = WeakKeyDictionary()
 
     def __get__(self, obj, objtype=None):
         return getattr(obj, self.name)
 
     def __set__(self, obj, value):
         setattr(obj, self.name, value)
-        fn = self.callback.get(id(obj))
+        fn = self.callback.get(obj)
         if fn:
             fn(obj, self.name, value)
 
@@ -116,7 +116,7 @@ class Property(object):
         delattr(obj, self.name)
 
     def subscribe(self, obj, callback):
-        self.callback[id(obj)] = callback
+        self.callback[obj] = callback
 
 def auto_sub(cls, sendlist):
     old_init = cls.__init__
