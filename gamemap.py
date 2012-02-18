@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import random
+import itertools
 from weakref import WeakValueDictionary
 from collections import namedtuple
 
@@ -48,6 +50,13 @@ class Layer(objects.SendWeakDict):
         mapobject = MapObject(obj, coord, info)
         self.add(mapobject)
         return mapobject
+
+    def get_free_coord(self):
+        free = self.Coord.all_coord.difference(self.keys())
+        try:
+            return random.choice(tuple(free))
+        except IndexError:
+            return None
 
     def subscribe(self, sub):
         pass
@@ -105,5 +114,6 @@ def get_coord(gamemap, x, y):
     Coord.gamemap = gamemap
     Coord.size_x = x
     Coord.size_y = y
+    Coord.all_coord = set(itertools.product(range(x), range(y)))
     return Coord
 

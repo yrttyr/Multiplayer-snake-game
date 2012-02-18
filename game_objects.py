@@ -70,13 +70,10 @@ class Rabbit(GameObject):
 
     def step(self):
         while True:
-            while True:
-                coord = randint(0, 20), randint(0, 20)
-                #if isinstance(self.gamemap[self.map_layer][coord].obj, EmptyObject):
-                   # break
-                break
-            mapobject = self.layer.add_mapobject(self, coord)
-            self.pieces.append(mapobject)
+            free = self.layer.get_free_coord()
+            if free is not None:
+                mapobject = self.layer.add_mapobject(self, free)
+                self.pieces.append(mapobject)
             sleep(self.speed)
 
 class Wall(GameObject):
