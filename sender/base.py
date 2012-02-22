@@ -4,8 +4,6 @@
 from weakref import WeakValueDictionary, ref
 
 from public import get_wrapper
-
-wrapper_functions = []
 from functions import receive
 
 class Link(object):

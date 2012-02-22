@@ -2,41 +2,46 @@ from weakref import WeakValueDictionary, WeakKeyDictionary, ref
 from functools import partial
 import UserDict
 
-import sender, public
+import public
+import functions
 
+send_functions = [functions.sendfunwrapper, functions.send_once,
+                  functions.sendtofunwrapper]
+
+@public.send_cls()
 class SendObject(object):
     def __init__(self, cls=None):
         self.change = partial(self._change)
         if cls:
             auto_sub(cls, self)
 
-    @sender.send_meth('set')
+    @public.send_meth('set')
+    def send_create(self, obj):
+         return id(obj), [getattr(obj, name, '')
+                    for name in obj.send_attrs]
+
+    @public.send_meth('set', functions=send_functions)
     def send(self, obj):
         return id(obj), [getattr(obj, name, '')
                     for name in obj.send_attrs]
 
-    @sender.send_meth('removeElement')
+    @public.send_meth('removeElement')
     def send_delete(self, obj):
         return id(obj),
 
-    @sender.recv_meth()
+    @public.recv_meth()
     def subscribe_to(self, sub, key):
         sub.subscribe(key)
 
-    @sender.recv_meth()
+    @public.recv_meth()
     def unsubscribe_to(self, sub, key):
         sub.unsubscribe(key)
-
-    #@sender.recv_meth('del')
-    #def delete(self, sub, obj):
-        #print 'delete', obj
-        #self.remove(obj)
 
     def subscribe_property(self, obj):
         for name in getattr(obj, 'send_attrs', ()):
             property_ = type(obj).__dict__[name]
             property_.subscribe(obj, self.change)
-        self.send(obj)
+        self.send_create(obj)
 
     def _change(self, obj, name, val):
         self.send(obj)
@@ -48,6 +53,7 @@ class SendObject(object):
     def unsubscribe(self, sub):
         pass
 
+@public.send_cls()
 class SendList(set, SendObject):
     def __init__(self, cls=None):
         SendObject.__init__(self, cls)
@@ -60,6 +66,7 @@ class SendList(set, SendObject):
         set.remove(self, obj)
         self.send_delete(obj)
 
+@public.send_cls()
 class SendDict(SendObject, UserDict.IterableUserDict):
     def __init__(self, cls=None):
         SendObject.__init__(self)
@@ -78,15 +85,21 @@ class SendDict(SendObject, UserDict.IterableUserDict):
         del self.data[key]
         self.send_delete(key)
 
-    @sender.send_meth('set')
+    @public.send_meth('set')
+    def send_create(self, obj):
+        return [getattr(obj, name, '')
+                for name in obj.send_attrs]
+
+    @public.send_meth('set')
     def send(self, obj):
         return [getattr(obj, name, '')
                 for name in obj.send_attrs]
 
-    @sender.send_meth('removeElement')
+    @public.send_meth('removeElement')
     def send_delete(self, key):
         return key,
 
+@public.send_cls()
 class SendWeakDict(WeakValueDictionary, SendDict):
     def __init__(self):
         SendObject.__init__(self)
@@ -127,19 +140,4 @@ def auto_sub(cls, sendlist):
 
 def attrs_replace(cls, params):
     for name in getattr(cls, 'send_attrs', ()):
-        _attr_replace(cls, name)
-
-def _attr_replace(cls, name):
-    setattr(cls, name, Property(name))
-
-import functions
-from base import wrapper_functions
-
-funlist = list(wrapper_functions) + [functions.send_once,
-                                     functions.sendtofunwrapper]
-
-SendObject = sender.send_cls(funlist=funlist)(SendObject)
-SendList = sender.send_cls(funlist=funlist)(SendList)
-SendDict = sender.send_cls(funlist=funlist)(SendDict)
-SendWeakDict = sender.send_cls(funlist=funlist)(SendWeakDict)
-wrapper_functions.extend((attrs_replace, functions.sendtofunwrapper))
+        setattr(cls, name, Property(name))
