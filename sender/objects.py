@@ -5,8 +5,7 @@ import UserDict
 import public
 import functions
 
-send_functions = [functions.sendfunwrapper, functions.send_once,
-                  functions.sendtofunwrapper]
+send_functions = [functions.sendfunwrapper, functions.send_once]
 
 @public.send_cls()
 class SendObject(object):
@@ -48,7 +47,7 @@ class SendObject(object):
 
     def subscribe(self, sub):
         for obj in self:
-            self.send(obj, to=sub)
+            self.send_create(obj, to=sub)
 
     def unsubscribe(self, sub):
         pass
@@ -90,7 +89,7 @@ class SendDict(SendObject, UserDict.IterableUserDict):
         return [getattr(obj, name, '')
                 for name in obj.send_attrs]
 
-    @public.send_meth('set')
+    @public.send_meth('set', functions=send_functions)
     def send(self, obj):
         return [getattr(obj, name, '')
                 for name in obj.send_attrs]

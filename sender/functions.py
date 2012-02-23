@@ -69,27 +69,28 @@ def sendtofunwrapper(fn, params):
 def send_once(fn, params):
     sendto = WeakValueDictionary()
     @wraps(fn)
-    def wrapper(self, to, obj):
+    def wrapper(self, obj):
         cache_key = (id(self), id(obj))
         if cache_key in sendto:
             return
 
-        sendto[cache_key] = TimeoutSend(self, to, fn, obj)
+        sendto[cache_key] = TimeoutSend(self, fn, obj)
     return wrapper
 
 import gevent
 
 class TimeoutSend(object):
-    def __init__(self, wrap, to, fn, obj):
-        self.wrap = wrap
-        self.to = to
+    def __init__(self, wrapped, fn, obj):
+        self.wrapped = wrapped
         self.fn = fn
         self.obj = ref(obj)
         self.greenlet = gevent.spawn(self.work)
 
     def work(self):
         if self.obj() is not None:
-            self.fn(self.wrap, self.to, self.obj())
+            from public import get_wrapper
+            to = set(get_wrapper(self.wrapped))
+            self.fn(self.wrapped, to, self.obj())
 
 def receive(sub, data):
     fn, args = protocol.decode(sub, data)
