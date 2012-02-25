@@ -12,9 +12,10 @@ def initfunwrapper(cls, params):
 
     @wraps(old_init)
     def wrapper(self, *args, **kwargs):
-        wr = get_wrapper(self, True)
-        if wr is None or wr.obj is None:
-            params['Wrapper'](self, params['name'])
+        if params['Wrapper'] is not False:
+            wr = get_wrapper(self, True)
+            if wr is None or wr.obj is None:
+                params['Wrapper'](self, params['name'])
         old_init(self, *args, **kwargs)
     cls.__init__ = wrapper
 

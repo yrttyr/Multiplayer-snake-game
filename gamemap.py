@@ -70,7 +70,7 @@ class Layer(objects.SendWeakDict):
             return objects.SendWeakDict.__getitem__(self, coord)
         return MapObject(self.default_object, coord)
 
-@public.send_cls()
+@public.send_cls(wrapper=False)
 class MapObject(object):
     send_attrs = 'coord', 'indef', 'info'
 
