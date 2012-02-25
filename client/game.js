@@ -1,5 +1,4 @@
 var AbstractGame, Game, Gamemap, GamesList, Layer, MapsList, Player, PlayersList,
-  __indexOf = Array.prototype.indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
   __hasProp = Object.prototype.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; },
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
@@ -107,25 +106,11 @@ Layer = (function() {
     return gamemap.needDraw.push(key);
   };
 
-  Layer.prototype.setType = function(k, x) {
-    if (__indexOf.call(this.dict, k) >= 0) {
-      this.dict[k].type = x;
-      return gamemap.needDraw.push(k);
-    } else {
-      return console.error('Cell empty', k);
-    }
-  };
-
   Layer.prototype.get = function(k) {
     return this.dict[k] || {
       'indef': this.default_tile_id,
       'type': ''
     };
-  };
-
-  Layer.prototype.getType = function(k) {
-    if (__indexOf.call(this.dict, k) >= 0) return this.dict[k].type;
-    return '';
   };
 
   Layer.prototype.getListIdAndCoord = function() {

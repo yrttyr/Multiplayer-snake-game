@@ -64,20 +64,8 @@ class Layer
         delete @dict[key]
         gamemap.needDraw.push(key)
 
-    setType: (k, x) ->
-        if k in @dict
-            @dict[k].type = x
-            gamemap.needDraw.push(k)
-        else
-            console.error('Cell empty', k)
-
     get: (k) ->
         return @dict[k] || {'indef': @default_tile_id, 'type': ''}
-
-    getType: (k) ->
-        if k in @dict
-            return @dict[k].type
-        return ''
 
     getListIdAndCoord: ->
         data = []
