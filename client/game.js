@@ -208,8 +208,14 @@ PlayersList = (function(_super) {
   __extends(PlayersList, _super);
 
   function PlayersList() {
-    this.div = document.getElementById('scoreslist');
+    this.scores_tab = document.getElementById('scores_tab');
+    this.div = document.createElement('div');
+    this.scores_tab.appendChild(this.div);
   }
+
+  PlayersList.prototype.destructor = function() {
+    return this.scores_tab.removeChild(this.div);
+  };
 
   return PlayersList;
 

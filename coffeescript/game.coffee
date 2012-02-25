@@ -122,7 +122,12 @@ class MapsList
 
 class PlayersList extends SendList
     constructor: ->
-        @div = document.getElementById('scoreslist')
+        @scores_tab = document.getElementById('scores_tab')
+        @div = document.createElement('div')
+        @scores_tab.appendChild(@div)
+
+    destructor: ->
+        @scores_tab.removeChild(@div)
 
 class AbstractGame
     constructor: ->
