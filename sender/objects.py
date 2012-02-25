@@ -16,17 +16,15 @@ class SendObject(object):
 
     @public.send_meth('set')
     def send_create(self, obj):
-         return id(obj), [getattr(obj, name, '')
-                    for name in obj.send_attrs]
+         return self.get_senddata(obj)
 
     @public.send_meth('set', functions=send_functions)
     def send(self, obj):
-        return id(obj), [getattr(obj, name, '')
-                    for name in obj.send_attrs]
+        return self.get_senddata(obj)
 
     @public.send_meth('removeElement')
-    def send_delete(self, obj):
-        return id(obj),
+    def send_delete(self, key):
+        return key,
 
     @public.recv_meth()
     def subscribe_to(self, sub, key):
@@ -51,7 +49,7 @@ class SendObject(object):
 
     def unsubscribe(self, sub):
         for obj in self:
-            self.send_delete(obj, to=sub)
+            self.send_delete(id(obj), to=sub)
 
 @public.send_cls()
 class SendList(set, SendObject):
@@ -64,7 +62,11 @@ class SendList(set, SendObject):
 
     def remove(self, obj):
         set.remove(self, obj)
-        self.send_delete(obj)
+        self.send_delete(id(obj))
+
+    def get_senddata(self, obj):
+        return id(obj), [getattr(obj, name, '')
+                    for name in obj.send_attrs]
 
 @public.send_cls()
 class SendDict(SendObject, UserDict.IterableUserDict):
@@ -80,19 +82,9 @@ class SendDict(SendObject, UserDict.IterableUserDict):
         del self.data[key]
         self.send_delete(key)
 
-    @public.send_meth('set')
-    def send_create(self, obj):
+    def get_senddata(self, obj):
         return [getattr(obj, name, '')
                 for name in obj.send_attrs]
-
-    @public.send_meth('set', functions=send_functions)
-    def send(self, obj):
-        return [getattr(obj, name, '')
-                for name in obj.send_attrs]
-
-    @public.send_meth('removeElement')
-    def send_delete(self, key):
-        return key,
 
 @public.send_cls()
 class SendWeakDict(SendDict, WeakValueDictionary):
