@@ -82,16 +82,18 @@ import gevent
 
 class TimeoutSend(object):
     def __init__(self, wrapped, fn, obj):
-        self.wrapped = wrapped
+        self.wrapped = ref(wrapped)
         self.fn = fn
         self.obj = ref(obj)
         self.greenlet = gevent.spawn(self.work)
 
     def work(self):
-        if self.obj() is not None:
+        obj = self.obj()
+        wrapped = self.wrapped()
+        if obj is not None and wrapped is not None:
             from public import get_wrapper
-            to = set(get_wrapper(self.wrapped))
-            self.fn(self.wrapped, to, self.obj())
+            to = set(get_wrapper(wrapped))
+            self.fn(wrapped, to, obj)
 
 def receive(sub, data):
     fn, args = protocol.decode(sub, data)

@@ -34,6 +34,3 @@ class Player(object):
             self.snake.rotation = rotate
             if not self.snake.alive:
                 self.snake.start(self.start_coord)
-
-    def __del__(self):
-        print('player del')

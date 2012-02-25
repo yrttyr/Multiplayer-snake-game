@@ -75,9 +75,6 @@ class Subscriber(Link):
     def receive(self, data):
         receive(self, data)
 
-    def __del__(self):
-        print 'subsc del'
-
 class WrapperMeta(type):
     _dict = WeakValueDictionary()
 
