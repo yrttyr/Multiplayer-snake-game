@@ -50,9 +50,9 @@ class GamesList(sender.objects.SendList):
     @public.recv_meth()
     def create_game(self, sub, map_key):
         game = Game(self, map_key)
-        self.subscribe_to(sub, game)
+        sub.subscribe(game)
 
-@public.send_cls(wrapper=WrapperSingleton)
+@public.send_cls()
 class PlayersList(sender.objects.SendList):
     pass
 
@@ -143,8 +143,8 @@ class Game(AbstractGame):
         self.snake_color.append(snake.drawdata['color'])
         player.end_game()
 
-        sub.unsubscribe(self.players)
         sub.unsubscribe(self.gamemap)
+        sub.unsubscribe(self.players)
 
         if self.snake_count == 0:
             gameslist.remove(self)

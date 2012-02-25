@@ -43,10 +43,10 @@ class Subscriber(Link):
         self.call()
 
     def subscribe(self, obj):
-        obj = get_wrapper(obj)
-        if obj not in self:
-            self._subscribe(obj)
-            obj._subscribe(self)
+        wr = get_wrapper(obj)
+        if wr not in self:
+            self._subscribe(wr)
+            wr._subscribe(self)
         return obj
 
     def unsubscribe(self, obj):
