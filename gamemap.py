@@ -17,7 +17,7 @@ class Gamemap(objects.SendDict):
 
     def add_layer(self, name, create_default_obj):
         layer = Layer(name, self.Coord)
-        self.add(layer)
+        self[name] = layer
         layer.default_object = create_default_obj(layer=layer)
         return layer
 
@@ -48,7 +48,7 @@ class Layer(objects.SendWeakDict):
     def add_mapobject(self, obj, coord, info=''):
         coord = self.Coord(coord)
         mapobject = MapObject(obj, coord, info)
-        self.add(mapobject)
+        self[coord] = mapobject
         return mapobject
 
     def get_free_coord(self):

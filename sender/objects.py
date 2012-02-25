@@ -50,7 +50,8 @@ class SendObject(object):
             self.send_create(obj, to=sub)
 
     def unsubscribe(self, sub):
-        pass
+        for obj in self:
+            self.send_delete(obj, to=sub)
 
 @public.send_cls()
 class SendList(set, SendObject):
@@ -71,16 +72,11 @@ class SendDict(SendObject, UserDict.IterableUserDict):
         SendObject.__init__(self)
         UserDict.IterableUserDict.__init__(self)
 
-    def get_send_key(self, obj):
-        return getattr(obj, obj.send_attrs[0])
-
-    def add(self, obj):
-        key = self.get_send_key(obj)
-        self[key] = obj
+    def __setitem__(self, key, obj):
+        super(SendDict, self).__setitem__(key, obj)
         self.subscribe_property(obj)
 
-    def remove(self, obj):
-        key = self.get_send_key(obj)
+    def __delitem__(self, key):
         del self.data[key]
         self.send_delete(key)
 
@@ -99,15 +95,14 @@ class SendDict(SendObject, UserDict.IterableUserDict):
         return key,
 
 @public.send_cls()
-class SendWeakDict(WeakValueDictionary, SendDict):
+class SendWeakDict(SendDict, WeakValueDictionary):
     def __init__(self):
         SendObject.__init__(self)
         WeakValueDictionary.__init__(self)
         def remove(wr, selfref=ref(self)):
             self = selfref()
             if self is not None:
-                self.send_delete(wr.key)
-                del self.data[wr.key]
+                del self[wr.key]
         self._remove = remove
 
 class Property(object):
