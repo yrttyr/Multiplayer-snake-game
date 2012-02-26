@@ -68,7 +68,6 @@ class Subscriber(Link):
         try:
             self.connect.send(data)
         except EnvironmentError:
-            print 'subs kill'
             self.kill()
             self.connect.close()
 

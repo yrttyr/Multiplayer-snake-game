@@ -37,7 +37,7 @@ class Layer(objects.SendWeakDict):
     send_attrs = 'name',
 
     def __init__(self, name, Coord):
-        objects.SendWeakDict.__init__(self)
+        super(Layer, self).__init__()
         self.name = name
         self.Coord = Coord
         self.default_object = None
@@ -67,7 +67,7 @@ class Layer(objects.SendWeakDict):
     def __getitem__(self, coord):
         coord = self.Coord(coord)
         if coord in self:
-            return objects.SendWeakDict.__getitem__(self, coord)
+            return super(Layer, self).__getitem__(coord)
         return MapObject(self.default_object, coord)
 
 @public.send_cls(wrapper=False)
