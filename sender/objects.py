@@ -1,5 +1,4 @@
 from weakref import WeakValueDictionary, WeakKeyDictionary, ref
-from functools import partial
 import UserDict
 
 import public
@@ -10,7 +9,7 @@ send_functions = [functions.sendfunwrapper, functions.send_once]
 @public.send_cls()
 class SendObject(object):
     def __init__(self, cls=None):
-        self.change = partial(self._change)
+        self.change = self._change
         if cls:
             auto_sub(cls, self)
 
