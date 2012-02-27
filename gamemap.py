@@ -10,7 +10,7 @@ from sender import public, objects
 from sender.base import WrapperUnique
 
 @public.send_cls(wrapper=WrapperUnique)
-class Gamemap(objects.SendDict):
+class Gamemap(objects.SendDict, objects.DictAutoSubscribe):
     def __init__(self, x, y):
         objects.SendDict.__init__(self)
         self.Coord = get_coord(self, x, y)
@@ -23,14 +23,6 @@ class Gamemap(objects.SendDict):
 
     def init(self):
         return self.Coord.size_x, self.Coord.size_y
-
-    def subscribe(self, sub):
-        for layer in self.values():
-            sub.subscribe(layer)
-
-    def unsubscribe(self, sub):
-        for layer in self.values():
-            sub.unsubscribe(layer)
 
 @public.send_cls()
 class Layer(objects.SendWeakDict):
@@ -57,12 +49,6 @@ class Layer(objects.SendWeakDict):
             return random.choice(tuple(free))
         except IndexError:
             return None
-
-    def subscribe(self, sub):
-        pass
-
-    def unsubscribe(self, sub):
-        pass
 
     def __getitem__(self, coord):
         coord = self.Coord(coord)

@@ -7,7 +7,7 @@ from hashlib import md5
 from functools import partial
 
 from gevent import sleep
-import sender.objects
+from sender import objects
 from sender import public
 from sender.base import WrapperSingleton, WrapperUnique
 
@@ -39,7 +39,7 @@ class MapsList(set):
 maps_list = MapsList()
 
 @public.send_cls(wrapper=WrapperSingleton)
-class GamesList(sender.objects.SendList):
+class GamesList(objects.SendList, objects.SendObjectSubscribeTo):
 
     @public.recv_meth()
     def create_map(self, sub):
@@ -53,7 +53,7 @@ class GamesList(sender.objects.SendList):
         sub.subscribe(game)
 
 @public.send_cls()
-class PlayersList(sender.objects.SendList):
+class PlayersList(objects.SendList):
     pass
 
 @public.send_cls()

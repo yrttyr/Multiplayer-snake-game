@@ -25,14 +25,6 @@ class SendObject(object):
     def send_delete(self, key):
         return key,
 
-    @public.recv_meth()
-    def subscribe_to(self, sub, key):
-        sub.subscribe(key)
-
-    @public.recv_meth()
-    def unsubscribe_to(self, sub, key):
-        sub.unsubscribe(key)
-
     def subscribe_property(self, obj):
         for name in getattr(obj, 'send_attrs', ()):
             property_ = type(obj).__dict__[name]
@@ -42,6 +34,20 @@ class SendObject(object):
     def _change(self, obj, name, val):
         self.send(obj)
 
+@public.send_cls()
+class SendObjectSubscribeTo(object):
+    def __init__(self):
+        pass
+
+    @public.recv_meth()
+    def subscribe_to(self, sub, key):
+        sub.subscribe(key)
+
+    @public.recv_meth()
+    def unsubscribe_to(self, sub, key):
+        sub.unsubscribe(key)
+
+class ListAutoSubscribe(object):
     def subscribe(self, sub):
         for obj in self:
             self.send_create(obj, to=sub)
@@ -66,6 +72,15 @@ class SendList(set, SendObject):
     def get_senddata(self, obj):
         return id(obj), [getattr(obj, name, '')
                     for name in obj.send_attrs]
+
+class DictAutoSubscribe(object):
+    def subscribe(self, sub):
+        for layer in self.values():
+            sub.subscribe(layer)
+
+    def unsubscribe(self, sub):
+        for layer in self.values():
+            sub.unsubscribe(layer)
 
 @public.send_cls()
 class SendDict(SendObject, UserDict.IterableUserDict):
