@@ -32,10 +32,6 @@ class MapsList(set):
     @public.send_meth('addList')
     def send_all_games(self):
         return [map_name for map_name in self],
-
-    def __del__(self):
-        print 'ML del', self, id(self)
-
 maps_list = MapsList()
 
 @public.send_cls(wrapper=WrapperSingleton)
