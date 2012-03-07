@@ -31,19 +31,19 @@ parseReceive = (data) ->
 
 decode = (key, value) ->
     if value['^class']
-        return createObject(window[value['^class']])
+        return createObject(value['^class'])
     else if value['^obj']
         return objects[value['^obj']]
     else if value['^meth']
         return callMeth(value['^meth']...)
     return value
 
-createObject = (constr) ->
-    (indef) ->
-        objects[indef] = (args...) ->
-            objects[indef] = new constr(args...)
-            objects[indef].indef = indef
-            console.log('objects now', indef)
+createObject = (className) ->
+    (indef, args) ->
+        cls = window[className]
+        inst = new cls(args...)
+        inst.indef = indef
+        objects[indef] = inst
 
 callMeth = (indef, fn_name) ->
     if fn_name == 'destructor'

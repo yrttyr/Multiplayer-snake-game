@@ -23,16 +23,14 @@ def send_consructor_wrap(cls, params):
     fn = cls.__dict__.get('init', lambda s: ())
     @wraps(fn)
     def wrapper(self, to, *args, **kwargs):
-        to.send(protocol.encode((type(self), (id(self), ))))
         data = fn(self, *args, **kwargs)
-        to.send(protocol.encode((self, data)))
+        to.send(protocol.encode((type(self), (id(self), data))))
     setattr(cls, 'init', wrapper)
 
 def send_destructor_wrap(cls, params):
     def destructor(self, to):
         meth = getattr(self, 'destructor')
         data = protocol.encode((meth, ()))
-
         to.send(data)
     destructor._sender = {'sendname': 'destructor', 'functions': ()}
     setattr(cls, 'destructor', destructor)

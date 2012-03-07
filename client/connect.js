@@ -40,7 +40,7 @@ parseReceive = function(data) {
 
 decode = function(key, value) {
   if (value['^class']) {
-    return createObject(window[value['^class']]);
+    return createObject(value['^class']);
   } else if (value['^obj']) {
     return objects[value['^obj']];
   } else if (value['^meth']) {
@@ -49,19 +49,17 @@ decode = function(key, value) {
   return value;
 };
 
-createObject = function(constr) {
-  return function(indef) {
-    return objects[indef] = function() {
-      var args;
-      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-      objects[indef] = (function(func, args, ctor) {
-        ctor.prototype = func.prototype;
-        var child = new ctor, result = func.apply(child, args);
-        return typeof result === "object" ? result : child;
-      })(constr, args, function() {});
-      objects[indef].indef = indef;
-      return console.log('objects now', indef);
-    };
+createObject = function(className) {
+  return function(indef, args) {
+    var cls, inst;
+    cls = window[className];
+    inst = (function(func, args, ctor) {
+      ctor.prototype = func.prototype;
+      var child = new ctor, result = func.apply(child, args);
+      return typeof result === "object" ? result : child;
+    })(cls, args, function() {});
+    inst.indef = indef;
+    return objects[indef] = inst;
   };
 };
 
@@ -76,7 +74,6 @@ callMeth = function(indef, fn_name) {
       } catch (error) {
 
       }
-      console.error('des');
       return delete objects[indef];
     };
   } else {
@@ -88,8 +85,6 @@ callMeth = function(indef, fn_name) {
     };
   }
 };
-
-
 
 SendList = (function() {
 
