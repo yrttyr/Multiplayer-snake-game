@@ -5,11 +5,6 @@ import json
 import types
 
 def encode(data):
-    # костыль
-    if isinstance(data[0], dict):
-        data = list(data)
-        data[0] = {'^obj': id(data[0])}
-
     return json.dumps(data, separators=(',', ':'),
                       default=obj_to_indef)
 
