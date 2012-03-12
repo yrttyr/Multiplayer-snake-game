@@ -144,21 +144,12 @@ class AbstractGame
     setDrawdata: (data) ->
         @objects[data['indef']] = new objectTypes[data['drawtype']](data)
 
-    setAllListCoord: (list) ->
-        list.forEach((value) ->
-            [indef, cells] = value
-            for cell in cells
-                coord = cell[0]
-                info = cell[1] || ''
-                gamemap.set_mapobject(indef, coord, info)
-        )
-        requestAnimationFrame(@update, @canvas);
-
 class Game extends AbstractGame
     constructor: ->
         super
         document.getElementById('etitorTools').style.display = 'none'
         document.getElementById('games').style.display = 'block'
+        requestAnimationFrame(@update, @canvas);
 
     update: =>
         gamemap.draw()

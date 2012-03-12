@@ -246,22 +246,6 @@ AbstractGame = (function() {
     return this.objects[data['indef']] = new objectTypes[data['drawtype']](data);
   };
 
-  AbstractGame.prototype.setAllListCoord = function(list) {
-    list.forEach(function(value) {
-      var cell, cells, coord, indef, info, _i, _len, _results;
-      indef = value[0], cells = value[1];
-      _results = [];
-      for (_i = 0, _len = cells.length; _i < _len; _i++) {
-        cell = cells[_i];
-        coord = cell[0];
-        info = cell[1] || '';
-        _results.push(gamemap.set_mapobject(indef, coord, info));
-      }
-      return _results;
-    });
-    return requestAnimationFrame(this.update, this.canvas);
-  };
-
   return AbstractGame;
 
 })();
@@ -274,6 +258,7 @@ Game = (function(_super) {
     this.update = __bind(this.update, this);    Game.__super__.constructor.apply(this, arguments);
     document.getElementById('etitorTools').style.display = 'none';
     document.getElementById('games').style.display = 'block';
+    requestAnimationFrame(this.update, this.canvas);
   }
 
   Game.prototype.update = function() {

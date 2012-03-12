@@ -92,10 +92,6 @@ class AbstractGame(object):
         self.send_drawdata(obj)
         return obj
 
-    @public.send_meth('setAllListCoord')
-    def send_all_coord(self):
-        return [obj.get_coord() for obj in self.objects],
-
     @public.send_meth('setListDrawdata')
     def send_all_drawdata(self):
         return [obj.get_drawdata() for obj in self.objects],
@@ -135,7 +131,6 @@ class Game(AbstractGame):
 
         sub.subscribe(self.players)
         self.send_all_drawdata(to=sub)
-        self.send_all_coord(to=sub)
 
     def unsubscribe(self, sub):
         self.snake_count -= 1
