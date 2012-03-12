@@ -34,6 +34,10 @@ class SendObject(object):
     def _change(self, obj, name, val):
         self.send(obj)
 
+    def subscribe(self, sub):
+        for obj in self:
+            self.send_create(obj, to=sub)
+
 @public.send_cls()
 class SendList(set, SendObject):
     def __init__(self, cls=None):
@@ -68,6 +72,10 @@ class SendDict(SendObject, UserDict.IterableUserDict):
     def get_senddata(self, obj):
         return [getattr(obj, name, '')
                 for name in obj.send_attrs]
+
+    def subscribe(self, sub):
+        for obj in self.values():
+            self.send_create(obj, to=sub)
 
 @public.send_cls()
 class SendWeakDict(SendDict, WeakValueDictionary):
