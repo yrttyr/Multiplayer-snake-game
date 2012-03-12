@@ -3,16 +3,16 @@
 
 import random
 import itertools
-from weakref import WeakValueDictionary
+from UserDict import IterableUserDict
 from collections import namedtuple
 
 from sender import public, objects
 from sender.base import WrapperUnique
 
 @public.send_cls(wrapper=WrapperUnique)
-class Gamemap(objects.SendDict, objects.DictAutoSubscribe):
+class Gamemap(object, IterableUserDict):
     def __init__(self, x, y):
-        objects.SendDict.__init__(self)
+        IterableUserDict.__init__(self)
         self.Coord = get_coord(self, x, y)
 
     def add_layer(self, name, create_default_obj):
@@ -24,10 +24,16 @@ class Gamemap(objects.SendDict, objects.DictAutoSubscribe):
     def init(self):
         return self.Coord.size_x, self.Coord.size_y
 
+    def subscribe(self, sub):
+        for layer in self.values():
+            sub.subscribe(layer)
+
+    def unsubscribe(self, sub):
+        for layer in self.values():
+            sub.unsubscribe(layer)
+
 @public.send_cls()
 class Layer(objects.SendWeakDict):
-    send_attrs = 'name',
-
     def __init__(self, name, Coord):
         super(Layer, self).__init__()
         self.name = name

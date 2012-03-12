@@ -35,7 +35,7 @@ class MapsList(set):
 maps_list = MapsList()
 
 @public.send_cls(wrapper=WrapperSingleton)
-class GamesList(objects.SendList, objects.SendObjectSubscribeTo):
+class GamesList(objects.SendList):
 
     @public.recv_meth()
     def create_map(self, sub):
@@ -47,6 +47,14 @@ class GamesList(objects.SendList, objects.SendObjectSubscribeTo):
     def create_game(self, sub, map_key):
         game = Game(self, map_key)
         sub.subscribe(game)
+
+    @public.recv_meth()
+    def subscribe_to(self, sub, key):
+        sub.subscribe(key)
+
+    @public.recv_meth()
+    def unsubscribe_to(self, sub, key):
+        sub.unsubscribe(key)
 
 @public.send_cls()
 class PlayersList(objects.SendList):
