@@ -20,12 +20,12 @@ def initfunwrapper(cls, params):
     cls.__init__ = wrapper
 
 def send_consructor_wrap(cls, params):
-    fn = cls.__dict__.get('init', lambda s: ())
+    fn = cls.__dict__.get('constructor', lambda s: ())
     @wraps(fn)
     def wrapper(self, to, *args, **kwargs):
         data = fn(self, *args, **kwargs)
         to.send(protocol.encode((type(self), (id(self), data))))
-    setattr(cls, 'init', wrapper)
+    setattr(cls, 'constructor', wrapper)
 
 def send_destructor_wrap(cls, params):
     def destructor(self, to):

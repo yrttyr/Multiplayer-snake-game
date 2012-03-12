@@ -21,7 +21,7 @@ class Gamemap(object, IterableUserDict):
         layer.default_object = create_default_obj(layer=layer)
         return layer
 
-    def init(self):
+    def constructor(self):
         return self.Coord.size_x, self.Coord.size_y
 
     def subscribe(self, sub):
@@ -40,7 +40,7 @@ class Layer(objects.SendWeakDict):
         self.Coord = Coord
         self.default_object = None
 
-    def init(self):
+    def constructor(self):
         return self.name, self.default_object.indef
 
     def add_mapobject(self, obj, coord, info=''):
