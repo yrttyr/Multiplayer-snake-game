@@ -140,6 +140,7 @@ class AbstractGame
     setListDrawdata: (list) ->
         for el in list
             @setDrawdata(el)
+        requestAnimationFrame(@update, @canvas);
 
     setDrawdata: (data) ->
         @objects[data['indef']] = new objectTypes[data['drawtype']](data)
@@ -149,7 +150,6 @@ class Game extends AbstractGame
         super
         document.getElementById('etitorTools').style.display = 'none'
         document.getElementById('games').style.display = 'block'
-        requestAnimationFrame(@update, @canvas);
 
     update: =>
         gamemap.draw()

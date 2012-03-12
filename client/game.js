@@ -233,13 +233,12 @@ AbstractGame = (function() {
   };
 
   AbstractGame.prototype.setListDrawdata = function(list) {
-    var el, _i, _len, _results;
-    _results = [];
+    var el, _i, _len;
     for (_i = 0, _len = list.length; _i < _len; _i++) {
       el = list[_i];
-      _results.push(this.setDrawdata(el));
+      this.setDrawdata(el);
     }
-    return _results;
+    return requestAnimationFrame(this.update, this.canvas);
   };
 
   AbstractGame.prototype.setDrawdata = function(data) {
@@ -258,7 +257,6 @@ Game = (function(_super) {
     this.update = __bind(this.update, this);    Game.__super__.constructor.apply(this, arguments);
     document.getElementById('etitorTools').style.display = 'none';
     document.getElementById('games').style.display = 'block';
-    requestAnimationFrame(this.update, this.canvas);
   }
 
   Game.prototype.update = function() {
