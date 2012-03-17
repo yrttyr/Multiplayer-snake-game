@@ -14,15 +14,14 @@
 <canvas id="canvas"></canvas>
 
 <div id='etitorTools'>
-    X<input type='text' id='Size_X' pattern='^[ 0-9]+$' onchange="gamemap_cont.setSizeX();" size=4>
-    Y<input type='text' id='Size_Y' pattern='^[ 0-9]+$' onchange="gamemap_cont.setSizeY();" size=4>
+    Название<input type='text' id='etitorMapName'>
     <br>
-        Базовый слой
-        <div id='base_layer' style="overflow:auto;"></div>
-        Земляной слой
-        <div id='ground_layer' style="overflow:auto;"></div>
-    <a href="" onclick="game.saveMap(); return false";>Сохранить карту</a>
-    <a href="" onclick="game.initGame(); return false";>Выйти из редактора</a>
+    X<input type='number' id='etitorSize_X' min='5' max='50' size=4>
+    Y<input type='number' id='etitorSize_Y' min='5' max='50' size=4>
+    <div id='etitorTiles'>
+    </div>
+    <input type='button' id='etitorSave' value='Сохранить карту'>
+    <input type='button' id='etitorExit' value='Выйти из редактора'>
 </div>
 
 <div id='scores_tab'>

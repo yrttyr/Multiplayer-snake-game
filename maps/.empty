@@ -1,14 +1,13 @@
 {
+    "name": "",
+    "layers": {
+        "base": "EmptyObject",
+        "ground": "Ground"
+    },
     "objects": [
-        ["Ground", []],
-        ["EmptyObject", []],
         ["Wall", []],
         ["StartPosition", []]
     ],
     "SizeX": 20,
-    "SizeY": 20,
-    "layers": {
-        "base": 1,
-        "ground": 0
-    }
+    "SizeY": 20
 }

@@ -24,6 +24,14 @@ class Gamemap(object, IterableUserDict):
     def constructor(self):
         return self.Coord.size_x, self.Coord.size_y
 
+    @public.send_meth('setSize')
+    def set_size(self, x, y):
+        if 5 < x < 50:
+            self.Coord.size_x = x
+        if 5 < y < 50:
+            self.Coord.size_y = y
+        return self.Coord.size_x, self.Coord.size_y
+
     def subscribe(self, sub):
         for layer in self.values():
             sub.subscribe(layer)

@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import UserDict
 import json
 import os
-from hashlib import md5
+import re
 from functools import partial
+from collections import defaultdict
 
 from gevent import sleep
 from sender import objects
@@ -20,32 +22,53 @@ class MaxplayerError(Exception):
         return 'Достигнуто максимальное количество игроков'
 
 @public.send_cls(wrapper=WrapperSingleton)
-class MapsList(set):
+class MapsList(object, UserDict.IterableUserDict):
     def __init__(self):
+        self.data = {}
+        self.names = []
         files = os.listdir('maps/')
-        files = [f for f in files if not f.startswith('.')]
-        self.update(files)
+        for filename in files:
+            with open('maps/' + filename) as file:
+                data = json.load(file)
+                self.data[filename] = data
+                if data['name']:
+                    self.names.append(data['name'])
 
     def subscribe(self, sub):
         self.send_all_games(to=sub)
 
     @public.send_meth('addList')
     def send_all_games(self):
-        return [map_name for map_name in self],
+        return self.names,
+
+    def __getitem__(self, name):
+        if name == '':
+            name = '.empty'
+        else:
+            name = re.sub('\W', '', name)
+        return super(MapsList, self).__getitem__(name)
+
+    def __setitem__(self, name, data):
+        name = re.sub('\W', '', name)
+        if not 0 != len(name) < 20:
+            raise
+        with open('maps/' + name, 'w') as f:
+            json.dump(data, f, indent=4)
+        super(MapsList, self).__setitem__(name, data)
+
 maps_list = MapsList()
 
 @public.send_cls(wrapper=WrapperSingleton)
 class GamesList(objects.SendList):
 
     @public.recv_meth()
-    def create_map(self, sub):
-        map_ = MapEditor(self)
-        sub.subscribe(map_)
-        sub['Player'].setdata(map_)
+    def create_map(self, sub, map_name=''):
+        map_editor = MapEditor(self, map_name)
+        sub.subscribe(map_editor)
 
     @public.recv_meth()
-    def create_game(self, sub, map_key):
-        game = Game(self, map_key)
+    def create_game(self, sub, map_name):
+        game = Game(self, map_name)
         sub.subscribe(game)
 
     @public.recv_meth()
@@ -67,12 +90,7 @@ class AbstractGame(object):
         self.objects = []
 
     def load_map(self, name):
-        if name not in maps_list:
-            raise 'Unknown map'
-
-        with open('maps/' + name) as f:
-            data = json.load(f)
-
+        data = maps_list[name]
         self.gamemap = Gamemap(data['SizeX'], data['SizeY'])
 
         for layer_name, default_tile in data['layers'].items():
@@ -104,8 +122,8 @@ class AbstractGame(object):
 class Game(AbstractGame):
     send_attrs = 'snake_count',
 
-    def __init__(self, cont, map_name):
-        super(Game, self).__init__(cont)
+    def __init__(self, container, map_name):
+        super(Game, self).__init__(container)
 
         self.players = PlayersList()
         self.max_snake = 3
@@ -118,29 +136,27 @@ class Game(AbstractGame):
     def subscribe(self, sub):
         if self.snake_count >= self.max_snake:
             raise MaxplayerError
-
-        sub.subscribe(self.gamemap)
-
         self.snake_count += 1
 
-        player = sub['Player']
-        self.players.add(player)
-        snake = self.add_object('Snake',
-            self.snake_color.pop(), player.scores_contr)
-        player.new_game(snake)
+        pl = sub['Player']
+        self.players.add(pl)
+        snake = partial(self.add_object, 'Snake',
+                        self.snake_color.pop())
+        pl.wrapper = partial(player.GameWrapper, snake)
 
+        sub.subscribe(self.gamemap)
         sub.subscribe(self.players)
         self.send_all_drawdata(to=sub)
 
     def unsubscribe(self, sub):
         self.snake_count -= 1
 
-        player = sub['Player']
-        self.players.remove(player)
-        snake = player.snake
+        pl = sub['Player']
+        self.players.remove(pl)
+        snake = pl.wrapper.snake
         self.objects.remove(snake)
         self.snake_color.append(snake.drawdata['color'])
-        player.end_game()
+        del pl.wrapper
 
         sub.unsubscribe(self.gamemap)
         sub.unsubscribe(self.players)
@@ -152,30 +168,49 @@ gameslist = GamesList(Game)
 
 @public.send_cls(wrapper=WrapperUnique)
 class MapEditor(AbstractGame):
-    def __init__(self, cont, map_key=None):
+    def __init__(self, cont, map_name=''):
         super(MapEditor, self).__init__(cont)
+        self.name = map_name
+        self.load_map(map_name)
 
-        if map_key is None:
-            self.load_map('.empty')
+    def constructor(self):
+        return self.name,
 
     @public.recv_meth()
-    def save_map(self, sub, data):
+    def save_map(self, sub, name):
         map_dict = {}
-        map_dict['SizeX'] = data['SizeX']
-        map_dict['SizeY'] = data['SizeY']
+        map_dict['name'] = name
+        sizeX = map_dict['SizeX'] = self.gamemap.Coord.size_x
+        sizeY = map_dict['SizeY'] = self.gamemap.Coord.size_y
 
         map_dict['layers'] = {}
         map_dict['objects'] = []
         for obj in self.objects:
             map_dict['objects'].append(
                 (type(obj).__name__,
-                [coord for indef, coord in data['objects']
-                if obj.indef == indef])
+                [piece.coord for piece in obj.pieces
+                 if 0 <= piece.coord[0] <= sizeX and
+                    0 <= piece.coord[1] <= sizeY])
             )
-            for name, layer in self.gamemap.items():
-                if layer.default_object.obj is obj:
-                    map_dict['layers'][name] = len(map_dict['objects']) - 1
+            for l_name, layer in self.gamemap.items():
+                default_tile = type(layer.default_object).__name__
+                map_dict['layers'][l_name] = default_tile
+        maps_list[name] = map_dict
 
-        name = md5(str(map_dict)).hexdigest()
-        with open('maps/' + name, 'w') as f:
-            data = json.dump(map_dict, f)
+    def subscribe(self, sub):
+        pl = sub['Player']
+        pl.wrapper = partial(player.MapEditorWrapper, self)
+        sub.subscribe(self.gamemap)
+        self.send_all_drawdata(to=sub)
+        self.send_tiles(to=sub)
+
+    def unsubscribe(self, sub):
+        del sub['Player'].wrapper
+        sub.unsubscribe(self.gamemap)
+
+    @public.send_meth('setTiles')
+    def send_tiles(self):
+        tiles = defaultdict(list)
+        for obj in self.objects:
+            tiles[obj.map_layer].append(obj.indef)
+        return tiles,

@@ -47,7 +47,7 @@ class EmptyObject(GameObject):
 class Ground(GameObject):
     map_layer = 'ground'
     cls_drawdata = {'drawtype': 'image',
-                    'image': 'empty'}
+                    'image': 'ground'}
 
     def get_coord(self):
         return self.indef, []

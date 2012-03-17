@@ -3,7 +3,7 @@
 var objectTypes = {
     'empty': function(data) {
         return {
-            'getSRC': function() {return null;},
+            'getSRC': function() {return images.other['empty'].src;},
             'draw': function(ctx, x, y) {},
             'layer': data['map_layer']
         }
@@ -13,14 +13,16 @@ var objectTypes = {
             'getSRC': function() {return images.other[this.image].src;},
             'image': data['image'],
             'draw': function(ctx, x, y) {
-                ctx.drawImage(images.other[this.image], x * CELLSIZE, y * CELLSIZE);
+                ctx.drawImage(images.other[this.image],
+                              x * CELLSIZE,
+                              y * CELLSIZE);
             },
             'layer': data['map_layer']
         }
     },
     'wall': function(data) {
         return {
-            'getSRC': function() {return 'images/wall/0.png';},
+            'getSRC': function() {return images.wall['0'].src;},
             'draw': function(ctx, x, y) {
                 ctx.drawImage(images.wall['0'], x * CELLSIZE, y * CELLSIZE);
             },

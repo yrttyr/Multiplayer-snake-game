@@ -1,41 +1,33 @@
-var AbstractGame, Game, Gamemap, GamesList, Layer, MapsList, Player, PlayersList,
+var AbstractGame, Game, Gamemap, GamesList, Layer, MapEditor, MapsList, Player, PlayersList,
   __hasProp = Object.prototype.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; },
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 Gamemap = (function() {
 
-  function Gamemap(SizeX, SizeY, layers_data) {
-    this.SizeX = SizeX;
-    this.SizeY = SizeY;
+  function Gamemap(sizeX, sizeY, layers_data) {
     window.gamemap = this;
     this.canvas = document.getElementById('canvas');
     this.ctx = this.canvas.getContext('2d');
     this.needDraw = [];
     this.layer = {};
-    this.refreshCanvas();
-    this.redrawAll();
+    this.setSize(sizeX, sizeY);
   }
 
   Gamemap.prototype.destructor = function() {
     return delete window.gamemap;
   };
 
-  Gamemap.prototype.setSizeX = function(x) {
-    this.SizeX = x || parseInt(document.getElementById('Size_X').value);
-    this.refreshCanvas();
-    return this.redrawAll();
-  };
-
-  Gamemap.prototype.setSizeY = function(y) {
-    this.SizeY = y || parseInt(document.getElementById('Size_Y').value);
+  Gamemap.prototype.setSize = function(SizeX, SizeY) {
+    this.SizeX = SizeX;
+    this.SizeY = SizeY;
     this.refreshCanvas();
     return this.redrawAll();
   };
 
   Gamemap.prototype.refreshCanvas = function() {
-    document.getElementById('Size_X').value = this.SizeX;
-    document.getElementById('Size_Y').value = this.SizeY;
+    document.getElementById('etitorSize_X').value = this.SizeX;
+    document.getElementById('etitorSize_Y').value = this.SizeY;
     this.canvas.width = this.SizeX * CELLSIZE;
     this.canvas.height = this.SizeY * CELLSIZE;
     return this.canvas.style.display = 'block';
@@ -113,24 +105,6 @@ Layer = (function() {
     };
   };
 
-  Layer.prototype.getListIdAndCoord = function() {
-    var coord, data, indef, key, value, _ref;
-    data = [];
-    _ref = this.dict;
-    for (key in _ref) {
-      value = _ref[key];
-      indef = value.indef;
-      if (indef === 0 || indef === 1) continue;
-      coord = key.split(',');
-      coord = [parseInt(coord[0]), parseInt(coord[1])];
-      if (coord[0] < 0 || coord[0] >= game.SizeX || coord[1] < 0 || coord[1] >= game.SizeY) {
-        continue;
-      }
-      data.push([indef, coord]);
-    }
-    return data;
-  };
-
   return Layer;
 
 })();
@@ -150,9 +124,9 @@ GamesList = (function(_super) {
       }
     }));
     this.div.appendChild(this.button('Редактор карт', function() {
-      if (_this.input.value !== '') {
-        connect.sendData([_this, 'create_map', _this.input.value]);
-        return _this.input.value = '';
+      if (_this.maplist.value !== '') {
+        connect.sendData([_this, 'create_map', _this.maplist.value]);
+        return _this.maplist.value = '';
       }
     }));
     title = document.createElement('div');
@@ -224,7 +198,7 @@ PlayersList = (function(_super) {
 AbstractGame = (function() {
 
   function AbstractGame() {
-    window.game = this;
+    this.update = __bind(this.update, this);    window.game = this;
     this.objects = {};
   }
 
@@ -245,6 +219,11 @@ AbstractGame = (function() {
     return this.objects[data['indef']] = new objectTypes[data['drawtype']](data);
   };
 
+  AbstractGame.prototype.update = function() {
+    gamemap.draw();
+    return requestAnimationFrame(this.update, gamemap.canvas);
+  };
+
   return AbstractGame;
 
 })();
@@ -254,17 +233,55 @@ Game = (function(_super) {
   __extends(Game, _super);
 
   function Game() {
-    this.update = __bind(this.update, this);    Game.__super__.constructor.apply(this, arguments);
+    Game.__super__.constructor.apply(this, arguments);
     document.getElementById('etitorTools').style.display = 'none';
     document.getElementById('games').style.display = 'block';
   }
 
-  Game.prototype.update = function() {
-    gamemap.draw();
-    return requestAnimationFrame(this.update, gamemap.canvas);
+  return Game;
+
+})(AbstractGame);
+
+MapEditor = (function(_super) {
+
+  __extends(MapEditor, _super);
+
+  function MapEditor(name) {
+    var _this = this;
+    MapEditor.__super__.constructor.apply(this, arguments);
+    this.name_div = document.getElementById('etitorMapName');
+    this.name_div.value = name;
+    this.tiles_div = document.getElementById('etitorTiles');
+    document.getElementById('etitorTools').style.display = 'block';
+    document.getElementById('games').style.display = 'none';
+    document.getElementById('etitorSave').onclick = function(e) {
+      return connect.sendData([_this, 'save_map', _this.name_div.value]);
+    };
+  }
+
+  MapEditor.prototype.setTiles = function(data) {
+    var el, indef, key, value, _i, _len, _results;
+    this.tiles_div.innerHTML = "";
+    _results = [];
+    for (key in data) {
+      value = data[key];
+      for (_i = 0, _len = value.length; _i < _len; _i++) {
+        indef = value[_i];
+        el = document.createElement('img');
+        el.src = this.objects[indef].getSRC();
+        el.onclick = (function(indef) {
+          return function() {
+            return window.player.setParameter('tile', indef);
+          };
+        })(indef);
+        this.tiles_div.appendChild(el);
+      }
+      _results.push(this.tiles_div.appendChild(document.createElement('br')));
+    }
+    return _results;
   };
 
-  return Game;
+  return MapEditor;
 
 })(AbstractGame);
 
@@ -279,7 +296,9 @@ Player = (function() {
   };
 
   function Player() {
-    var _this = this;
+    var resize,
+      _this = this;
+    window.player = this;
     document.onkeydown = function(e) {
       var rotate;
       e = window.event || e;
@@ -292,9 +311,21 @@ Player = (function() {
       var x, y;
       x = parseInt(e.pageX / CELLSIZE);
       y = parseInt(e.pageY / CELLSIZE);
-      return connect.sendData([_this, 'set_start_coord', x, y]);
+      return connect.sendData([_this, 'set_coord', x, y]);
     };
+    resize = function(e) {
+      var x, y;
+      x = parseInt(document.getElementById('etitorSize_X').value);
+      y = parseInt(document.getElementById('etitorSize_Y').value);
+      return connect.sendData([_this, 'set_parameter', 'size', [x, y]]);
+    };
+    document.getElementById('etitorSize_X').onchange = resize;
+    document.getElementById('etitorSize_Y').onchange = resize;
   }
+
+  Player.prototype.setParameter = function(name, value) {
+    return connect.sendData([this, 'set_parameter', name, value]);
+  };
 
   return Player;
 
