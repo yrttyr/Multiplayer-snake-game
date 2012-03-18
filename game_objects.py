@@ -148,7 +148,9 @@ class Snake(GameObject):
             if self.len < len(self.pieces):
                 self.del_last()
 
-            coord = self.pieces[-1].coord + self.direct[self.rotation]
+            old = self.pieces[-1].coord
+            dc = self.direct[self.rotation]
+            coord = old[0] + dc[0], old[1] + dc[1]
             if self.test_coll(coord):
                 self.add_new(coord)
             sleep(self.speed)

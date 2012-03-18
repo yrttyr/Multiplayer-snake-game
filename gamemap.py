@@ -4,7 +4,6 @@
 import random
 import itertools
 from UserDict import IterableUserDict
-from collections import namedtuple
 
 from sender import public, objects
 from sender.base import WrapperUnique
@@ -13,24 +12,26 @@ from sender.base import WrapperUnique
 class Gamemap(object, IterableUserDict):
     def __init__(self, x, y):
         IterableUserDict.__init__(self)
-        self.Coord = get_coord(self, x, y)
+        self.size_x = x
+        self.size_y = y
+        self.all_coord = set(itertools.product(range(x), range(y)))
 
     def add_layer(self, name, create_default_obj):
-        layer = Layer(name, self.Coord)
+        layer = Layer(name, self)
         self[name] = layer
         layer.default_object = create_default_obj(layer=layer)
         return layer
 
     def constructor(self):
-        return self.Coord.size_x, self.Coord.size_y
+        return self.size_x, self.size_y
 
     @public.send_meth('setSize')
     def set_size(self, x, y):
         if 5 < x < 50:
-            self.Coord.size_x = x
+            self.size_x = x
         if 5 < y < 50:
-            self.Coord.size_y = y
-        return self.Coord.size_x, self.Coord.size_y
+            self.size_y = y
+        return self.size_x, self.size_y
 
     def subscribe(self, sub):
         for layer in self.values():
@@ -42,24 +43,28 @@ class Gamemap(object, IterableUserDict):
 
 @public.send_cls()
 class Layer(objects.SendWeakDict):
-    def __init__(self, name, Coord):
+    def __init__(self, name, gamemap):
         super(Layer, self).__init__()
         self.name = name
-        self.Coord = Coord
+        self.gamemap = gamemap
         self.default_object = None
 
     def constructor(self):
         return self.name, self.default_object.indef
 
     def get_free_coord(self):
-        free = self.Coord.all_coord.difference(self.keys())
+        free = self.gamemap.all_coord.difference(self.keys())
         try:
             return random.choice(tuple(free))
         except IndexError:
             return None
 
+    def coord_handling(self, coord):
+        return coord[0] % self.gamemap.size_x, \
+               coord[1] % self.gamemap.size_y
+
     def __getitem__(self, coord):
-        coord = self.Coord(coord)
+        coord = self.coord_handling(coord)
         if coord in self:
             return super(Layer, self).__getitem__(coord)
         return self.default_object.create_tile(coord)
@@ -70,43 +75,14 @@ class MapObject(object):
 
     def __init__(self, coord, info=''):
         self.info = info
-        self.coord = self.layer.Coord(coord)
+        self.coord = self.layer.coord_handling(coord)
         self.indef = self.game_object.indef
         self.layer[self.coord] = self
 
     def can_start(self):
-        objs = self.coord.iter_objs()
+        objs = self.iter_tiles()
         return all(obj.can_start for obj in objs)
 
-_Coord = namedtuple('Coord', ['x', 'y'])
-def get_coord(gamemap, x, y):
-    class Coord(_Coord):
-        __slots__ = ()
-
-        def __new__(cls, x, y=0):
-            if isinstance(x, (tuple, list)):
-                x, y = x
-            x %= cls.size_x
-            y %= cls.size_y
-
-            return _Coord.__new__(Coord, x, y)
-
-        def __sub__(self, o):
-            return self.x - o[0], self.y - o[1]
-
-        def __add__(self, o):
-            return self.x + o[0], self.y + o[1]
-
-        def get_obj(self, key):
-            return self.gamemap[key][self].game_object
-
-        def iter_objs(self):
-            for layer in self.gamemap.values():
-                yield layer[self].game_object
-
-    Coord.gamemap = gamemap
-    Coord.size_x = x
-    Coord.size_y = y
-    Coord.all_coord = set(itertools.product(range(x), range(y)))
-    return Coord
-
+    def iter_tiles(self):
+        for layer in self.layer.gamemap.values():
+            yield layer[self.coord].game_object

@@ -180,8 +180,8 @@ class MapEditor(AbstractGame):
     def save_map(self, sub, name):
         map_dict = {}
         map_dict['name'] = name
-        sizeX = map_dict['SizeX'] = self.gamemap.Coord.size_x
-        sizeY = map_dict['SizeY'] = self.gamemap.Coord.size_y
+        sizeX = map_dict['SizeX'] = self.gamemap.size_x
+        sizeY = map_dict['SizeY'] = self.gamemap.size_y
 
         map_dict['layers'] = {}
         map_dict['objects'] = []
