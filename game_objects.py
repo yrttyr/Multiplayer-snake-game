@@ -15,7 +15,7 @@ class GameObject(object):
     cls_drawdata = {'drawtype': 'image'}
     tile_class = Tile
 
-    def __init__(self, layer, coord):
+    def __init__(self, layer, coords):
         self.indef = self.get_id()
         self.drawdata = {'indef': self.indef,
                         'map_layer': self.map_layer}
@@ -24,7 +24,8 @@ class GameObject(object):
         self.layer = layer
         self.tiles = list()
         self.create_tile = self._create_tile_generator()
-        self.create_object(coord)
+        for coord in coords:
+            self.tiles.append(self.create_tile(coord))
 
     def _create_tile_generator(self):
         return type('Tile_%d' % self.indef, (self.tile_class,), {
@@ -34,10 +35,6 @@ class GameObject(object):
 
     def coll(self, coll_obj, tile):
         return True
-
-    def create_object(self, coords):
-        for coord in coords:
-            self.tiles.append(self.create_tile(coord))
 
     def get_drawdata(self):
         return self.drawdata
