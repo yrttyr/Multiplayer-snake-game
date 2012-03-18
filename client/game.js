@@ -33,12 +33,6 @@ Gamemap = (function() {
     return this.canvas.style.display = 'block';
   };
 
-  Gamemap.prototype.set_mapobject = function(indef, coord, info) {
-    var layer_name;
-    layer_name = game.objects[indef].layer;
-    return this.layer[layer_name].set(coord, indef, info);
-  };
-
   Gamemap.prototype.redrawAll = function() {
     var x, y, _ref, _results;
     _results = [];

@@ -21,10 +21,6 @@ class Gamemap
         @canvas.height = @SizeY * CELLSIZE
         @canvas.style.display = 'block'
 
-    set_mapobject: (indef, coord, info) ->
-        layer_name = game.objects[indef].layer
-        @layer[layer_name].set(coord, indef, info)
-
     redrawAll: ->
         for x in [0..@SizeX]
             for y in [0..@SizeY]
