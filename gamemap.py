@@ -51,12 +51,6 @@ class Layer(objects.SendWeakDict):
     def constructor(self):
         return self.name, self.default_object.indef
 
-    def add_mapobject(self, obj, coord, info=''):
-        coord = self.Coord(coord)
-        mapobject = MapObject(obj, coord, info)
-        self[coord] = mapobject
-        return mapobject
-
     def get_free_coord(self):
         free = self.Coord.all_coord.difference(self.keys())
         try:
@@ -68,18 +62,17 @@ class Layer(objects.SendWeakDict):
         coord = self.Coord(coord)
         if coord in self:
             return super(Layer, self).__getitem__(coord)
-        return MapObject(self.default_object, coord)
+        return self.default_object.create_tile(coord)
 
 @public.send_cls(wrapper=False)
 class MapObject(object):
     send_attrs = 'coord', 'indef', 'info'
 
-    def __init__(self, obj, coord, info=''):
-        self.obj = obj
-        self.indef = obj.indef
-        self.layer = obj.layer
+    def __init__(self, coord, info=''):
         self.info = info
-        self.coord = coord
+        self.coord = self.layer.Coord(coord)
+        self.indef = self.game_object.indef
+        self.layer[self.coord] = self
 
     def can_start(self):
         objs = self.coord.iter_objs()
@@ -105,11 +98,11 @@ def get_coord(gamemap, x, y):
             return self.x + o[0], self.y + o[1]
 
         def get_obj(self, key):
-            return self.gamemap[key][self].obj
+            return self.gamemap[key][self].game_object
 
         def iter_objs(self):
             for layer in self.gamemap.values():
-                yield layer[self].obj
+                yield layer[self].game_object
 
     Coord.gamemap = gamemap
     Coord.size_x = x

@@ -6,11 +6,14 @@ from itertools import count
 
 from gevent import sleep, spawn
 
+from gamemap import MapObject
+
 class GameObject(object):
     can_start = False
     get_id = count().next
     map_layer = 'base'
     cls_drawdata = {'drawtype': 'image'}
+    tile_class = MapObject
 
     def __init__(self, layer, coord):
         self.indef = self.get_id()
@@ -20,15 +23,21 @@ class GameObject(object):
 
         self.layer = layer
         self.pieces = list()
+        self.create_tile = self._create_tile_generator()
         self.create_object(coord)
+
+    def _create_tile_generator(self):
+        return type('Tile_%d' % self.indef, (self.tile_class,), {
+            'game_object': self,
+            #'indef': self.indef,
+            'layer': self.layer})
 
     def coll(self, coll_obj, map_object):
         return True
 
     def create_object(self, coords):
         for coord in coords:
-            mapobject = self.layer.add_mapobject(self, coord)
-            self.pieces.append(mapobject)
+            self.pieces.append(self.create_tile(coord))
 
     def get_drawdata(self):
         return self.drawdata
@@ -62,8 +71,7 @@ class Rabbit(GameObject):
         while True:
             free = self.layer.get_free_coord()
             if free is not None:
-                mapobject = self.layer.add_mapobject(self, free)
-                self.pieces.append(mapobject)
+                self.pieces.append(self.create_tile(free))
             sleep(self.speed)
 
 class Wall(GameObject):
@@ -101,8 +109,7 @@ class Snake(GameObject):
         self.alive = True
         self.len = 3
         info = str(self.rotation) + 'h'
-        mapobject = self.layer.add_mapobject(self, coord, info)
-        self.pieces.append(mapobject)
+        self.pieces.append(self.create_tile(coord, info))
         self.greenlet = spawn(self.step)
 
     def kill(self):
@@ -117,8 +124,7 @@ class Snake(GameObject):
 
     def add_new(self, coord):
         info = '_' + str((self.rotation + 2) % 4)
-        mapobject = self.layer.add_mapobject(self, coord, info)
-        self.pieces.append(mapobject)
+        self.pieces.append(self.create_tile(coord, info))
 
         if self.pieces[-2].info[1] == 'b' or self.pieces[-2].info[1] == 'h':
             self.pieces[-2].info = 'b' + str(self.rotation)
@@ -127,7 +133,7 @@ class Snake(GameObject):
 
     def test_coll(self, coord):
         map_object = self.layer[coord]
-        return map_object.obj.coll(self, map_object)
+        return map_object.game_object.coll(self, map_object)
 
     def coll(self, coll_obj, map_object):
         coll_obj.len -= 1
