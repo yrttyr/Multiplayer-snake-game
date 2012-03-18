@@ -6,14 +6,14 @@ from itertools import count
 
 from gevent import sleep, spawn
 
-from gamemap import MapObject
+from gamemap import Tile
 
 class GameObject(object):
     can_start = False
     get_id = count().next
     map_layer = 'base'
     cls_drawdata = {'drawtype': 'image'}
-    tile_class = MapObject
+    tile_class = Tile
 
     def __init__(self, layer, coord):
         self.indef = self.get_id()
@@ -22,7 +22,7 @@ class GameObject(object):
         self.drawdata.update(self.cls_drawdata)
 
         self.layer = layer
-        self.pieces = list()
+        self.tiles = list()
         self.create_tile = self._create_tile_generator()
         self.create_object(coord)
 
@@ -32,12 +32,12 @@ class GameObject(object):
             #'indef': self.indef,
             'layer': self.layer})
 
-    def coll(self, coll_obj, map_object):
+    def coll(self, coll_obj, tile):
         return True
 
     def create_object(self, coords):
         for coord in coords:
-            self.pieces.append(self.create_tile(coord))
+            self.tiles.append(self.create_tile(coord))
 
     def get_drawdata(self):
         return self.drawdata
@@ -61,8 +61,8 @@ class Rabbit(GameObject):
         self.speed = 10.0
         self.greenlet = spawn(self.step)
 
-    def coll(self, coll_obj, map_object):
-        self.pieces.remove(map_object)
+    def coll(self, coll_obj, tile):
+        self.tiles.remove(tile)
         coll_obj.len += 5
         coll_obj.scores(2)
         return True
@@ -71,7 +71,7 @@ class Rabbit(GameObject):
         while True:
             free = self.layer.get_free_coord()
             if free is not None:
-                self.pieces.append(self.create_tile(free))
+                self.tiles.append(self.create_tile(free))
             sleep(self.speed)
 
 class Wall(GameObject):
@@ -80,7 +80,7 @@ class Wall(GameObject):
     def __init__(self, layer, coord):
         super(Wall, self).__init__(layer, coord)
 
-    def coll(self, coll_obj, map_object):
+    def coll(self, coll_obj, tile):
         coll_obj.len -= 1
         return False
 
@@ -109,33 +109,33 @@ class Snake(GameObject):
         self.alive = True
         self.len = 3
         info = str(self.rotation) + 'h'
-        self.pieces.append(self.create_tile(coord, info))
+        self.tiles.append(self.create_tile(coord, info))
         self.greenlet = spawn(self.step)
 
     def kill(self):
         self.alive = False
-        del self.pieces[:]
+        del self.tiles[:]
         if hasattr(self, 'greenlet'):
             self.greenlet.kill()
 
     def del_last(self):
-        self.pieces.pop(0)
-        self.pieces[0].info = self.pieces[0].info[1] + '_'
+        self.tiles.pop(0)
+        self.tiles[0].info = self.tiles[0].info[1] + '_'
 
     def add_new(self, coord):
         info = '_' + str((self.rotation + 2) % 4)
-        self.pieces.append(self.create_tile(coord, info))
+        self.tiles.append(self.create_tile(coord, info))
 
-        if self.pieces[-2].info[1] == 'b' or self.pieces[-2].info[1] == 'h':
-            self.pieces[-2].info = 'b' + str(self.rotation)
+        if self.tiles[-2].info[1] == 'b' or self.tiles[-2].info[1] == 'h':
+            self.tiles[-2].info = 'b' + str(self.rotation)
         else:
-            self.pieces[-2].info = self.pieces[-2].info[1] + str(self.rotation)
+            self.tiles[-2].info = self.tiles[-2].info[1] + str(self.rotation)
 
     def test_coll(self, coord):
-        map_object = self.layer[coord]
-        return map_object.game_object.coll(self, map_object)
+        tile = self.layer[coord]
+        return tile.game_object.coll(self, tile)
 
-    def coll(self, coll_obj, map_object):
+    def coll(self, coll_obj, tile):
         coll_obj.len -= 1
         coll_obj.scores(-1)
         return False
@@ -145,10 +145,10 @@ class Snake(GameObject):
             if self.len < 2:
                 self.kill()
 
-            if self.len < len(self.pieces):
+            if self.len < len(self.tiles):
                 self.del_last()
 
-            old = self.pieces[-1].coord
+            old = self.tiles[-1].coord
             dc = self.direct[self.rotation]
             coord = old[0] + dc[0], old[1] + dc[1]
             if self.test_coll(coord):

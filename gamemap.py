@@ -70,7 +70,7 @@ class Layer(objects.SendWeakDict):
         return self.default_object.create_tile(coord)
 
 @public.send_cls(wrapper=False)
-class MapObject(object):
+class Tile(object):
     send_attrs = 'coord', 'indef', 'info'
 
     def __init__(self, coord, info=''):
