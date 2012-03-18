@@ -114,14 +114,14 @@ class AbstractGame
     setListDrawdata: (list) ->
         for el in list
             @setDrawdata(el)
-        requestAnimationFrame(@update, @canvas);
+        @update()
 
     setDrawdata: (data) ->
         @objects[data['indef']] = new objectTypes[data['drawtype']](data)
 
-    update: =>
+    update: ->
         gamemap.draw()
-        requestAnimationFrame(@update, gamemap.canvas)
+        requestAnimationFrame(game.update, gamemap.canvas)
 
 class Game extends AbstractGame
     constructor: ->
