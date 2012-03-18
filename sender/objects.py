@@ -27,7 +27,7 @@ class SendObject(object):
 
     def subscribe_property(self, obj):
         for name in getattr(obj, 'send_attrs', ()):
-            property_ = type(obj).__dict__[name]
+            property_ = getattr(type(obj), name)
             property_.subscribe(obj, self.change)
         self.send_create(obj)
 
@@ -94,6 +94,8 @@ class Property(object):
         self.callback = WeakKeyDictionary()
 
     def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
         return getattr(obj, self.name)
 
     def __set__(self, obj, value):
