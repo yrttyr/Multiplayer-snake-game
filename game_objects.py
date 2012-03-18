@@ -30,10 +30,6 @@ class GameObject(object):
             mapobject = self.layer.add_mapobject(self, coord)
             self.pieces.append(mapobject)
 
-    def get_coord(self):
-        return self.indef, [(obj.coord, obj.info)
-                for obj in self.pieces]
-
     def get_drawdata(self):
         return self.drawdata
 
@@ -41,16 +37,10 @@ class EmptyObject(GameObject):
     can_start = True
     cls_drawdata = {'drawtype': 'empty'}
 
-    def get_coord(self):
-        return self.indef, []
-
 class Ground(GameObject):
     map_layer = 'ground'
     cls_drawdata = {'drawtype': 'image',
                     'image': 'ground'}
-
-    def get_coord(self):
-        return self.indef, []
 
 class Rabbit(GameObject):
     can_start = True
