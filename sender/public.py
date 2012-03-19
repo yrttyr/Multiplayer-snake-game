@@ -54,10 +54,9 @@ def recv_meth(name=None, functions=recv_functions):
 
 from base import Wrapper
 
-def send_cls(name='', wrapper=Wrapper, functions=class_functions):
+def send_cls(wrapper=Wrapper, functions=class_functions):
     def inner(cls):
-        params = {'Wrapper': wrapper,
-                  'name': name if name else cls.__name__}
+        params = {'Wrapper': wrapper}
         for fn in functions:
             fn(cls, params)
 

@@ -85,11 +85,10 @@ class WrapperMeta(type):
 class Wrapper(Link):
     __metaclass__ = WrapperMeta
 
-    def __init__(self, obj, group_name):
+    def __init__(self, obj):
         super(Wrapper, self).__init__()
         self._obj = ref(obj, lambda wr: self.kill())
         self.keep_obj = None
-        self.group_name = group_name
 
     @property
     def obj(self):
