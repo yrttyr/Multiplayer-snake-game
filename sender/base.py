@@ -10,29 +10,29 @@ class Link(object):
     keeper = set()
 
     def __init__(self):
-        self.objs = set()
+        self.links = set()
         self.keeper.add(self)
 
     def kill(self):
-        for obj in set(self.objs):
+        for obj in set(self.links):
             self.unsubscribe(obj)
 
         self.keeper.discard(self)
 
     def _subscribe(self, obj):
-        self.objs.add(obj)
+        self.links.add(obj)
 
     def _unsubscribe(self, obj):
-        self.objs.remove(obj)
+        self.links.remove(obj)
 
     def __contains__(self, key):
-        return key in self.objs
+        return key in self.links
 
     def __len__(self):
-        return len(self.objs)
+        return len(self.links)
 
     def __iter__(self):
-        for i in self.objs:
+        for i in self.links:
             yield i
 
 class Subscriber(Link):
@@ -96,7 +96,7 @@ class Wrapper(Link):
         self.obj.constructor(to=obj)
         getattr(self.obj, 'subscribe', lambda _: None)(obj)
 
-        if self.objs:
+        if self.links:
             self.keep_obj = self.obj
 
     def _unsubscribe(self, obj):
@@ -104,7 +104,7 @@ class Wrapper(Link):
         getattr(self.obj, 'unsubscribe', lambda _: None)(obj)
         self.obj.destructor(to=obj)
 
-        if not self.objs:
+        if not self.links:
             self.keep_obj = None
 
 class WrapperSingletonMeta(WrapperMeta):
