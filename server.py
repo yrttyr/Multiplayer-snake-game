@@ -4,7 +4,7 @@
 from multiprocessing import Process
 
 from gevent import sleep, getcurrent
-from ws4py.server.geventserver import WebSocketServer
+from ws4py.server import geventserver
 
 from sender.base import Subscriber
 import player
@@ -29,22 +29,23 @@ p = Process(target=http_server)
 p.daemon = True
 p.start()
 
-def start():
-    server = WebSocketServer(('127.0.0.1', 8080), websocket_app)
-    server.serve_forever()
-
-def websocket_app(ws, t):
-    subscriber = Subscriber(ws)
-    while True:
-        data = ws.receive()
-        if data:
-            subscriber.receive(data)
-        else:
-            subscriber.kill()
-            break
-
 class Subscriber(Subscriber):
     def call(self):
         self.subscribe('GamesList')
         self.subscribe('MapsList')
         self.subscribe(player.Player())
+
+class WebSocket(geventserver.WebSocket):
+    def opened(self):
+        self.subscriber = Subscriber(self)
+
+    def received_message(self, message):
+        self.subscriber.receive(message.data)
+
+    def closed(self, code, reason=None):
+        self.subscriber.kill()
+        del self.subscriber
+
+server = geventserver.WebSocketServer(('127.0.0.1', 8080),
+                                      websocket_class=WebSocket)
+server.serve_forever()

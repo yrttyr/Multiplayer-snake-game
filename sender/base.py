@@ -65,11 +65,7 @@ class Subscriber(Link):
         pass
 
     def send(self, data):
-        try:
-            self.connect.send(data)
-        except EnvironmentError:
-            self.kill()
-            self.connect.close()
+        self.connect.send(data)
 
     def receive(self, data):
         receive(self, data)
