@@ -3,7 +3,6 @@
 
 from multiprocessing import Process
 
-from gevent import sleep, getcurrent
 from ws4py.server import geventserver
 
 from sender.base import Subscriber
