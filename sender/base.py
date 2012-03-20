@@ -14,9 +14,6 @@ class Link(object):
         self.keeper.add(self)
 
     def kill(self):
-        for obj in set(self.links):
-            self.unsubscribe(obj)
-
         self.keeper.discard(self)
 
     def _subscribe(self, obj):
@@ -54,6 +51,11 @@ class Subscriber(Link):
         if obj in self:
             self._unsubscribe(obj)
             obj._unsubscribe(self)
+
+    def kill(self):
+        for obj in set(self.links):
+            self.unsubscribe(obj)
+        super(Subscriber, self).kill()
 
     def __setitem__(self, key, value):
         self._dict[key] = value
