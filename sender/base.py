@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from weakref import WeakValueDictionary, ref
+from weakref import WeakValueDictionary, WeakKeyDictionary, ref
 from collections import MutableMapping
 
 from public import get_wrapper
@@ -37,34 +37,37 @@ class Subscriber(Link, MutableMapping):
     def __init__(self, connect):
         super(Subscriber, self).__init__()
         self._dict = WeakValueDictionary()
+        self._names = WeakKeyDictionary()
         self.connect = connect
         self.call()
 
     def subscribe(self, obj):
-        wr = get_wrapper(obj)
-        if wr not in self.links:
-            self._subscribe(wr)
-            keys = wr._subscribe(self)
-            for key in keys:
-                self._dict[key] = wr.obj
-        return obj
+        self.__setitem__('_', obj)
 
     def unsubscribe(self, obj):
         wr = get_wrapper(obj)
-        if wr in self.links:
-            self._unsubscribe(wr)
-            keys = wr._unsubscribe(self)
-            for key in keys:
-                self._dict.pop(key, None)
+        self._unsubscribe(wr)
+        keys = wr._unsubscribe(self)
+        keys.append(self._names[wr])
+        for key in keys:
+            self._dict.pop(key, None)
 
-    def __setitem__(self, key, value):
-        self._dict[key] = value
+    def __setitem__(self, key, obj):
+        wr = get_wrapper(obj)
+        self._names[wr] = key
+        self._subscribe(wr)
+        keys = wr._subscribe(self)
+        keys.append(key)
+        assert not(key != '_' and key in self._dict), 'same name'
+        for key in keys:
+            self._dict[key] = wr.obj
+        return obj
 
     def __getitem__(self, key):
         return self._dict[key]
 
     def __delitem__(self, key):
-        return self._dict[key]
+        self.unsubscribe(self[key])
 
     def __hash__(self):
         return Link.__hash__(self)
