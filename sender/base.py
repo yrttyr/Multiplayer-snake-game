@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from weakref import WeakValueDictionary, ref
+from collections import MutableMapping
 
 from public import get_wrapper
 from functions import receive
@@ -32,7 +33,7 @@ class Link(object):
         for i in self.links:
             yield i
 
-class Subscriber(Link):
+class Subscriber(Link, MutableMapping):
     def __init__(self, connect):
         super(Subscriber, self).__init__()
         self._dict = WeakValueDictionary()
@@ -41,27 +42,33 @@ class Subscriber(Link):
 
     def subscribe(self, obj):
         wr = get_wrapper(obj)
-        if wr not in self:
+        if wr not in self.links:
             self._subscribe(wr)
             wr._subscribe(self)
         return obj
 
     def unsubscribe(self, obj):
-        obj = get_wrapper(obj)
-        if obj in self:
+        wr = get_wrapper(obj)
+        if wr in self.links:
             self._unsubscribe(obj)
             obj._unsubscribe(self)
-
-    def kill(self):
-        for obj in set(self.links):
-            self.unsubscribe(obj)
-        super(Subscriber, self).kill()
 
     def __setitem__(self, key, value):
         self._dict[key] = value
 
     def __getitem__(self, key):
         return self._dict[key]
+
+    def __delitem__(self, key):
+        return self._dict[key]
+
+    def __hash__(self):
+        return Link.__hash__(self)
+
+    def kill(self):
+        for obj in set(self.links):
+            self.unsubscribe(obj)
+        super(Subscriber, self).kill()
 
     def call(self):
         pass
