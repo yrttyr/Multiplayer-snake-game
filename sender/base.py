@@ -44,14 +44,18 @@ class Subscriber(Link, MutableMapping):
         wr = get_wrapper(obj)
         if wr not in self.links:
             self._subscribe(wr)
-            wr._subscribe(self)
+            keys = wr._subscribe(self)
+            for key in keys:
+                self._dict[key] = wr.obj
         return obj
 
     def unsubscribe(self, obj):
         wr = get_wrapper(obj)
         if wr in self.links:
             self._unsubscribe(wr)
-            wr._unsubscribe(self)
+            keys = wr._unsubscribe(self)
+            for key in keys:
+                self._dict.pop(key, None)
 
     def __setitem__(self, key, value):
         self._dict[key] = value
@@ -101,12 +105,12 @@ class Wrapper(Link):
 
     def _subscribe(self, sub):
         super(Wrapper, self)._subscribe(sub)
-        sub[id(self.obj)] = self.obj
         self.obj.constructor(to=sub)
         getattr(self.obj, 'subscribe', lambda _: None)(sub)
 
         if self.links:
             self.keep_obj = self.obj
+        return [id(self.obj)]
 
     def _unsubscribe(self, sub):
         super(Wrapper, self)._unsubscribe(sub)
@@ -115,6 +119,10 @@ class Wrapper(Link):
 
         if not self.links:
             self.keep_obj = None
+
+        if self.obj is not None:
+            return [id(self.obj)]
+        return []
 
 class WrapperSingletonMeta(WrapperMeta):
     def __call__(cls, wraped_class, *args, **kwargs):
@@ -130,26 +138,31 @@ class WrapperSingleton(Wrapper):
     __metaclass__ = WrapperSingletonMeta
 
     def _subscribe(self, sub):
-        super(WrapperSingleton, self)._subscribe(sub)
-        sub[type(self.obj).__name__] = self.obj
+        keys = super(WrapperSingleton, self)._subscribe(sub)
+        name = type(self.obj).__name__
+        keys.append(name)
+        return keys
 
     def _unsubscribe(self, sub):
-        super(WrapperSingleton, self)._unsubscribe(sub)
+        keys = super(WrapperSingleton, self)._unsubscribe(sub)
         if self.obj is not None:
             name = type(self.obj).__name__
-            del sub[name]
+            keys.append(name)
+        return keys
 
 class WrapperUnique(Wrapper):
     def _subscribe(self, sub):
         name = type(self.obj).__name__
         if name in sub._dict:
             sub.unsubscribe(sub[name])
-        super(WrapperUnique, self)._subscribe(sub)
-        sub[name] = self.obj
+        keys = super(WrapperUnique, self)._subscribe(sub)
+        keys.append(name)
+        return keys
 
     def _unsubscribe(self, sub):
-        super(WrapperUnique, self)._unsubscribe(sub)
+        keys = super(WrapperUnique, self)._unsubscribe(sub)
         if self.obj is not None:
             name = type(self.obj).__name__
-            del sub[name]
+            keys.append(name)
+        return keys
 
