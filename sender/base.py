@@ -50,7 +50,7 @@ class Subscriber(Link, MutableMapping):
     def unsubscribe(self, obj):
         wr = get_wrapper(obj)
         if wr in self.links:
-            self._unsubscribe(obj)
+            self._unsubscribe(wr)
             obj._unsubscribe(self)
 
     def __setitem__(self, key, value):
