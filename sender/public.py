@@ -47,7 +47,8 @@ def send_meth(name, functions=send_functions):
 def recv_meth(name=None, functions=recv_functions):
     def inner(meth):
         meth._sender = {
-            'functions': functions
+            'functions': functions,
+            'recvmeth': True
         }
         return meth
     return inner

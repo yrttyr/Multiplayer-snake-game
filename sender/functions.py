@@ -95,8 +95,23 @@ class TimeoutSend(object):
             self.fn(wrapped, to, obj)
 
 def receive(sub, data):
-    fn, args = protocol.decode(sub, data)
-    fn(sub, *args)
+    try:
+        fn, args = protocol.decode(sub, data)
+    except:
+         print 'Wrong data "%s"' % data
+         return
+
+    try:
+        if fn._sender['recvmeth'] != True:
+            raise AttributeError
+    except (AttributeError, KeyError):
+        print 'Wrong function "%s"' % fn.__name__
+        return
+
+    try:
+        fn(sub, *args)
+    except TypeError:
+        print 'Wrong args %s' % args
 
 def recvfunwrapper(fn, params):
     @wraps(fn)
