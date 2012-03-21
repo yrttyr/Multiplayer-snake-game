@@ -99,19 +99,19 @@ class Wrapper(Link):
     def obj(self):
         return self._obj()
 
-    def _subscribe(self, obj):
-        super(Wrapper, self)._subscribe(obj)
-        obj[id(self.obj)] = self.obj
-        self.obj.constructor(to=obj)
-        getattr(self.obj, 'subscribe', lambda _: None)(obj)
+    def _subscribe(self, sub):
+        super(Wrapper, self)._subscribe(sub)
+        sub[id(self.obj)] = self.obj
+        self.obj.constructor(to=sub)
+        getattr(self.obj, 'subscribe', lambda _: None)(sub)
 
         if self.links:
             self.keep_obj = self.obj
 
-    def _unsubscribe(self, obj):
-        super(Wrapper, self)._unsubscribe(obj)
-        getattr(self.obj, 'unsubscribe', lambda _: None)(obj)
-        self.obj.destructor(to=obj)
+    def _unsubscribe(self, sub):
+        super(Wrapper, self)._unsubscribe(sub)
+        getattr(self.obj, 'unsubscribe', lambda _: None)(sub)
+        self.obj.destructor(to=sub)
 
         if not self.links:
             self.keep_obj = None
@@ -129,9 +129,15 @@ class WrapperSingletonMeta(WrapperMeta):
 class WrapperSingleton(Wrapper):
     __metaclass__ = WrapperSingletonMeta
 
-    def _subscribe(self, obj):
-        super(WrapperSingleton, self)._subscribe(obj)
-        obj[type(self.obj).__name__] = self.obj
+    def _subscribe(self, sub):
+        super(WrapperSingleton, self)._subscribe(sub)
+        sub[type(self.obj).__name__] = self.obj
+
+    def _unsubscribe(self, sub):
+        super(WrapperSingleton, self)._unsubscribe(sub)
+        if self.obj is not None:
+            name = type(self.obj).__name__
+            del sub[name]
 
 class WrapperUnique(Wrapper):
     def _subscribe(self, sub):
@@ -140,4 +146,10 @@ class WrapperUnique(Wrapper):
             sub.unsubscribe(sub[name])
         super(WrapperUnique, self)._subscribe(sub)
         sub[name] = self.obj
+
+    def _unsubscribe(self, sub):
+        super(WrapperUnique, self)._unsubscribe(sub)
+        if self.obj is not None:
+            name = type(self.obj).__name__
+            del sub[name]
 
