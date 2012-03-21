@@ -35,16 +35,8 @@ class Subscriber(Subscriber):
         self.subscribe(player.Player())
 
     def kill(self):
-        try:
-            self.unsubscribe(self['Game'])
-        except KeyError:
-            pass
-
-        try:
-            self.unsubscribe(self['MapEditor'])
-        except KeyError:
-            pass
-
+        self.pop('Game', None)
+        self.pop('MapEditor', None)
         super(Subscriber, self).kill()
 
 class WebSocket(geventserver.WebSocket):
