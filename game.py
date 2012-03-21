@@ -134,6 +134,7 @@ class Game(AbstractGame):
         self.add_object('Rabbit')
 
     def subscribe(self, sub):
+        sub.pop('MapEditor', None)
         if self.snake_count >= self.max_snake:
             raise MaxplayerError
         self.snake_count += 1
@@ -197,7 +198,12 @@ class MapEditor(AbstractGame):
                 map_dict['layers'][l_name] = default_tile
         maps_list[name] = map_dict
 
+    @public.recv_meth()
+    def exit(self, sub):
+        del sub['MapEditor']
+
     def subscribe(self, sub):
+        sub.pop('Game', None)
         pl = sub['Player']
         pl.wrapper = partial(player.MapEditorWrapper, self)
         sub.subscribe(self.gamemap)

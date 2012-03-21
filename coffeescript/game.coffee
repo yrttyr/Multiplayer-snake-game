@@ -9,6 +9,7 @@ class Gamemap
 
     destructor: ->
         delete window.gamemap
+        @canvas.style.display = 'none'
 
     setSize: (@SizeX, @SizeY) ->
         @refreshCanvas()
@@ -108,9 +109,6 @@ class AbstractGame
         window.game = @
         @objects = {}
 
-    destructor: ->
-        delete window.game
-
     setListDrawdata: (list) ->
         for el in list
             @setDrawdata(el)
@@ -126,8 +124,10 @@ class AbstractGame
 class Game extends AbstractGame
     constructor: ->
         super
-        document.getElementById('etitorTools').style.display = 'none'
-        document.getElementById('games').style.display = 'block'
+        document.getElementById('scores_tab').style.display = 'block'
+
+    destructor: ->
+        document.getElementById('scores_tab').style.display = 'none'
 
 class MapEditor extends AbstractGame
     constructor: (name) ->
@@ -140,6 +140,13 @@ class MapEditor extends AbstractGame
 
         document.getElementById('etitorSave').onclick = (e) =>
             connect.sendData([@, 'save_map', @name_div.value])
+
+        document.getElementById('etitorExit').onclick = (e) =>
+            connect.sendData([@, 'exit'])
+
+    destructor: ->
+        document.getElementById('etitorTools').style.display = 'none'
+        document.getElementById('games').style.display = 'block'
 
     setTiles: (data)->
         @tiles_div.innerHTML = ""

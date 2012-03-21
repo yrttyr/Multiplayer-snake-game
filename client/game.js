@@ -14,7 +14,8 @@ Gamemap = (function() {
   }
 
   Gamemap.prototype.destructor = function() {
-    return delete window.gamemap;
+    delete window.gamemap;
+    return this.canvas.style.display = 'none';
   };
 
   Gamemap.prototype.setSize = function(SizeX, SizeY) {
@@ -195,10 +196,6 @@ AbstractGame = (function() {
     this.objects = {};
   }
 
-  AbstractGame.prototype.destructor = function() {
-    return delete window.game;
-  };
-
   AbstractGame.prototype.setListDrawdata = function(list) {
     var el, _i, _len;
     for (_i = 0, _len = list.length; _i < _len; _i++) {
@@ -227,9 +224,12 @@ Game = (function(_super) {
 
   function Game() {
     Game.__super__.constructor.apply(this, arguments);
-    document.getElementById('etitorTools').style.display = 'none';
-    document.getElementById('games').style.display = 'block';
+    document.getElementById('scores_tab').style.display = 'block';
   }
+
+  Game.prototype.destructor = function() {
+    return document.getElementById('scores_tab').style.display = 'none';
+  };
 
   return Game;
 
@@ -250,7 +250,15 @@ MapEditor = (function(_super) {
     document.getElementById('etitorSave').onclick = function(e) {
       return connect.sendData([_this, 'save_map', _this.name_div.value]);
     };
+    document.getElementById('etitorExit').onclick = function(e) {
+      return connect.sendData([_this, 'exit']);
+    };
   }
+
+  MapEditor.prototype.destructor = function() {
+    document.getElementById('etitorTools').style.display = 'none';
+    return document.getElementById('games').style.display = 'block';
+  };
 
   MapEditor.prototype.setTiles = function(data) {
     var el, indef, key, value, _i, _len, _results;

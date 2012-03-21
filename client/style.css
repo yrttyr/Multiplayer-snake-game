@@ -14,8 +14,9 @@ BODY {
     overflow: auto;
     clear: left;
 }
-#scores  {
-    style=border-style: solid;
+#scores_tab {
+    display: none;
+    border-style: solid;
     border-width: 1px;
     height: 120px;
     width: 130px;
@@ -23,8 +24,8 @@ BODY {
     float: left;
 }
 #etitorTools {
-    style=border-style: solid;
+    display: none;
+    border-style: solid;
     border-width: 1px;
     overflow: auto;
-    display: none;
 }
