@@ -30,7 +30,7 @@ class GameObject(object):
     def _create_tile_generator(self):
         return type('Tile_%d' % self.indef, (self.tile_class,), {
             'game_object': self,
-            #'indef': self.indef,
+            'indef': self.indef,
             'layer': self.layer})
 
     def coll(self, coll_obj, tile):

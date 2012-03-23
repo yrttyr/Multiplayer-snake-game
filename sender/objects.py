@@ -25,15 +25,15 @@ class SendObject(object):
 
     @public.send_meth('set')
     def send_create(self, obj):
-        return self.get_senddata(obj)
+        data = [getattr(obj, name, '') for name in obj.send_attrs]
+        send_once = getattr(obj, 'send_once', ())
+        data.extend(getattr(obj, name, '') for name in send_once)
+        return self.send_keys[obj], data
 
     @public.send_meth('set', functions=send_functions)
     def send(self, obj):
-        return self.get_senddata(obj)
-
-    def get_senddata(self, obj):
-        return self.send_keys[obj], [getattr(obj, name, '')
-                                     for name in obj.send_attrs]
+        data = [getattr(obj, name, '') for name in obj.send_attrs]
+        return self.send_keys[obj], data
 
     @public.send_meth('removeElement')
     def send_delete(self, key):

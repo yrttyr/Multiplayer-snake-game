@@ -73,7 +73,6 @@ class NoSendTile(object):
     def __init__(self, coord, info=''):
         self.info = info
         self.coord = self.layer.coord_handling(coord)
-        self.indef = self.game_object.indef
         if self.coord in self.layer.__dict__:
             del self.layer[self.coord]
 
@@ -88,10 +87,10 @@ class NoSendTile(object):
 @public.send_cls(wrapper=False)
 class Tile(NoSendTile):
     send_key = lambda self, _: self.coord
-    send_attrs = 'indef', 'info'
+    send_once = 'indef',
+    send_attrs = 'info',
 
     def __init__(self, coord, info=''):
         self.info = info
         self.coord = self.layer.coord_handling(coord)
-        self.indef = self.game_object.indef
         self.layer[self.coord] = self

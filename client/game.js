@@ -81,9 +81,9 @@ Layer = (function() {
 
   Layer.prototype.set = function(key, value) {
     var indef, type;
-    indef = value[0], type = value[1];
+    type = value[0], indef = value[1];
     this.dict[key] = {
-      'indef': indef,
+      'indef': indef || this.dict[key].indef,
       'type': type || ''
     };
     return gamemap.needDraw.push(key);

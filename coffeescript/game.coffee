@@ -46,8 +46,10 @@ class Layer
         gamemap.layer[@name] = @
 
     set: (key, value) ->
-        [indef, type] = value
-        @dict[key] = {'indef': indef, 'type': type || ''}
+        [type, indef] = value
+        @dict[key] = {
+            'indef': indef || @dict[key].indef,
+            'type': type || ''}
         gamemap.needDraw.push(key)
 
     removeElement: (key) ->
