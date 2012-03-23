@@ -79,12 +79,14 @@ Layer = (function() {
     gamemap.layer[this.name] = this;
   }
 
-  Layer.prototype.set = function(k, x, type) {
-    this.dict[k] = {
-      'indef': x,
+  Layer.prototype.set = function(key, value) {
+    var indef, type;
+    indef = value[0], type = value[1];
+    this.dict[key] = {
+      'indef': indef,
       'type': type || ''
     };
-    return gamemap.needDraw.push(k);
+    return gamemap.needDraw.push(key);
   };
 
   Layer.prototype.removeElement = function(key) {

@@ -6,7 +6,7 @@ from itertools import count
 
 from gevent import sleep, spawn
 
-from gamemap import Tile
+from gamemap import Tile, NoSendTile
 
 class GameObject(object):
     can_start = False
@@ -42,11 +42,13 @@ class GameObject(object):
 class EmptyObject(GameObject):
     can_start = True
     cls_drawdata = {'drawtype': 'empty'}
+    tile_class = NoSendTile
 
 class Ground(GameObject):
     map_layer = 'ground'
     cls_drawdata = {'drawtype': 'image',
                     'image': 'ground'}
+    tile_class = NoSendTile
 
 class Rabbit(GameObject):
     can_start = True

@@ -69,15 +69,13 @@ class Layer(objects.SendWeakDict):
             return super(Layer, self).__getitem__(coord)
         return self.default_object.create_tile(coord)
 
-@public.send_cls(wrapper=False)
-class Tile(object):
-    send_attrs = 'coord', 'indef', 'info'
-
+class NoSendTile(object):
     def __init__(self, coord, info=''):
         self.info = info
         self.coord = self.layer.coord_handling(coord)
         self.indef = self.game_object.indef
-        self.layer[self.coord] = self
+        if self.coord in self.layer.__dict__:
+            del self.layer[self.coord]
 
     def can_start(self):
         objs = self.iter_tiles()
@@ -86,3 +84,14 @@ class Tile(object):
     def iter_tiles(self):
         for layer in self.layer.gamemap.values():
             yield layer[self.coord].game_object
+
+@public.send_cls(wrapper=False)
+class Tile(NoSendTile):
+    send_key = lambda self, _: self.coord
+    send_attrs = 'indef', 'info'
+
+    def __init__(self, coord, info=''):
+        self.info = info
+        self.coord = self.layer.coord_handling(coord)
+        self.indef = self.game_object.indef
+        self.layer[self.coord] = self
